@@ -77,7 +77,7 @@ export default async function MembersPage({
     // Map dynamic type name to membership_category for display
     const members = membersData?.map(member => ({
         ...member,
-        membership_category: member.member_types?.name || member.membership_category
+        membership_category: (Array.isArray(member.member_types) ? member.member_types[0]?.name : member.member_types?.name) || member.membership_category
     }))
 
     return <MemberListClient members={members || []} org_id={org_id} slug={slug} />
