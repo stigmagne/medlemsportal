@@ -72,7 +72,7 @@ async function verifyPagination() {
 
     if (page1.length > 50) {
         console.error(`❌ ERROR: Returned more than ${perPage} rows! Pagination is NOT working locally (if this was the app).`)
-    } else if (page1.length === perPage || (totalCount < perPage && page1.length === totalCount)) {
+    } else if (page1.length === perPage || ((totalCount || 0) < perPage && page1.length === (totalCount || 0))) {
         console.log('✅ SUCCESS: Page size respects the limit.')
     } else {
         console.warn('⚠️  Unexpected row count given the total.')
