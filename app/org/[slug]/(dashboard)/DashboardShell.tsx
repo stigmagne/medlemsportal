@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import {
     LayoutDashboard, Users, Home, Calendar, MessageSquare,
     CreditCard, Receipt, Users2, FileText, Settings, User,
-    Wallet, ChevronDown, ChevronRight
+    Wallet, ChevronDown, ChevronRight, Folder
 } from 'lucide-react'
 
 interface DashboardShellProps {
@@ -102,6 +102,11 @@ export default function DashboardShell({
             href: `/org/${org.slug}/moter`,
             label: 'Møter',
             icon: <Users2 className="w-5 h-5" />
+        },
+        {
+            href: `/org/${org.slug}/arkiv`,
+            label: 'Dokumentarkiv',
+            icon: <Folder className="w-5 h-5" />
         },
         {
             href: `/org/${org.slug}/saker/ny`, // TODO: Point to /saker list when ready
