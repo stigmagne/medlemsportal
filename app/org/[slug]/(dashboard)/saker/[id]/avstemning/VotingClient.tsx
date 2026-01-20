@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { castVote, addComment } from '../actions'
 import { useRouter } from 'next/navigation'
 
