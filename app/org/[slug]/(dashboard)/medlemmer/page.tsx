@@ -4,10 +4,13 @@ import MemberListClient from './MemberListClient'
 
 export default async function MembersPage({
     params,
+    searchParams,
 }: {
     params: Promise<{ slug: string }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const { slug } = await params
+    const resolvedSearchParams = await searchParams
     const supabase = await createClient()
 
     // Verify user is authenticated
@@ -43,8 +46,16 @@ export default async function MembersPage({
         redirect('/')
     }
 
-    // Fetch members for this organization
-    const { data: membersData, error } = await supabase
+    // Pagination & Filter params
+    const page = Number(resolvedSearchParams.page) || 1
+    const perPage = 50 // Show 50 per page
+    const from = (page - 1) * perPage
+    const to = from + perPage - 1
+    const q = (resolvedSearchParams.q as string) || ''
+    const status = (resolvedSearchParams.status as string) || ''
+
+    // Fetch members with filters and pagination
+    let query = supabase
         .from('members')
         .select(`
             id, 
@@ -58,11 +69,24 @@ export default async function MembersPage({
             member_types (
                 name
             )
-        `)
+        `, { count: 'exact' }) // Get total count
         .eq('organization_id', org_id)
-        .is('deleted_at', null) // Only show non-deleted members
+        .is('deleted_at', null)
+
+    // Apply filters
+    if (status && status !== 'all') {
+        query = query.eq('membership_status', status)
+    }
+
+    if (q) {
+        // Search in multiple fields
+        query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,member_number.ilike.%${q}%`)
+    }
+
+    const { data: membersData, count, error } = await query
         .order('last_name', { ascending: true })
         .order('first_name', { ascending: true })
+        .range(from, to)
 
     if (error) {
         console.error('Error fetching members:', {
@@ -86,5 +110,18 @@ export default async function MembersPage({
         };
     })
 
-    return <MemberListClient members={members || []} org_id={org_id} slug={slug} />
+    const totalCount = count || 0
+    const totalPages = Math.ceil(totalCount / perPage)
+
+    return (
+        <MemberListClient
+            members={members || []}
+            org_id={org_id}
+            slug={slug}
+            totalCount={totalCount}
+            currentPage={page}
+            totalPages={totalPages}
+            perPage={perPage}
+        />
+    )
 }
