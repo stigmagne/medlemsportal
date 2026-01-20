@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import {
     LayoutDashboard, Users, Home, Calendar, MessageSquare,
     CreditCard, Receipt, Users2, FileText, Settings, User,
-    Wallet, ChevronDown, ChevronRight, Folder
+    Wallet, ChevronDown, ChevronRight, Folder, PieChart
 } from 'lucide-react'
 
 interface DashboardShellProps {
@@ -118,6 +118,11 @@ export default function DashboardShell({
             label: 'Innstillinger',
             icon: <Settings className="w-5 h-5" />
         },
+        {
+            href: `/org/${org.slug}/innstillinger/rapporter`,
+            label: 'Rapportering',
+            icon: <PieChart className="w-5 h-5" />
+        }
     ]
 
     const memberNavItems = [
