@@ -1,0 +1,153 @@
+{
+    "MinSide": {
+        "title": "Velg forening",
+        "description": "Du er registrert som medlem i flere foreninger. Velg hvilken du vil gå til.",
+        "noMemberships": {
+            "title": "Ingen aktive medlemskap",
+            "description": "Vi finner ingen aktive medlemskap knyttet til din e-postadresse.",
+            "contact": "Ta kontakt med din forening hvis du mener dette er feil."
+        },
+        "card": {
+            "status": "Status:",
+            "active": "Aktiv",
+            "inactive": "Inaktiv/Venter",
+            "goTo": "Gå til Min Side"
+        }
+    },
+    "MinSideOrg": {
+        "notFound": {
+            "title": "Ingen medlemsprofil funnet",
+            "description": "Vi finner ingen medlemskap knyttet til e-postadressen",
+            "contact": "Dersom du mener dette er feil, ta kontakt med foreningen for å sjekke hvilken e-postadresse som er registrert på deg."
+        },
+        "welcome": "Velkommen, {name}!",
+        "payments": {
+            "title": "Betalinger",
+            "amount": "Beløp:",
+            "dueDate": "Forfall:",
+            "empty": "Du har ingen utestående betalinger."
+        },
+        "membership": {
+            "title": "Mitt Medlemskap",
+            "number": "Medlemsnummer:",
+            "category": "Kategori:",
+            "status": "Status:",
+            "joinedDate": "Innmeldsdato:",
+            "unknown": "Ukjent"
+        },
+        "actions": {
+            "title": "Mine Handlinger",
+            "editProfile": "Rediger profilinformasjon",
+            "membershipCard": "Vis medlemskort (kommer snart)"
+        },
+        "status": {
+            "active": "Aktiv",
+            "inactive": "Inaktiv",
+            "pending": "Venter"
+        }
+    },
+    "Dashboard": {
+        "role": {
+            "admin": "Administrator",
+            "member": "Medlem"
+        },
+        "logout": "Logg ut",
+        "nav": {
+            "dashboard": "Dashboard",
+            "members": "Medlemmer",
+            "communication": "Kommunikasjon",
+            "minSide": "Min Side"
+        },
+        "toggleMenu": "Meny",
+        "overview": {
+            "title": "{orgName} Dashboard",
+            "welcome": "Velkommen tilbake, {name}!",
+            "stats": {
+                "members": "Medlemmer",
+                "paid": "Betalt kontingent",
+                "campaigns": "E-postkampanjer",
+                "newMembers": "Nye medlemmer (måned)"
+            },
+            "charts": {
+                "growth": "Medlemsvekst (siste 6 mnd)",
+                "paymentStatus": "Betalingsstatus"
+            },
+            "activity": {
+                "title": "Siste aktivitet",
+                "empty": "Ingen aktivitet å vise ennå"
+            },
+            "quickActions": {
+                "title": "Hurtigvalg",
+                "addMember": {
+                    "title": "Legg til nytt medlem",
+                    "description": "Registrer et nytt medlem"
+                },
+                "sendNewsletter": {
+                    "title": "Send nyhetsbrev",
+                    "description": "Opprett en e-postkampanje"
+                },
+                "viewContingent": {
+                    "title": "Se kontingentliste",
+                    "description": "Oversikt over betalinger"
+                }
+            }
+        }
+    },
+    "Members": {
+        "list": {
+            "title": "Medlemsoversikt",
+            "searchPlaceholder": "Søk etter navn eller e-post...",
+            "filter": {
+                "allStatus": "Alle statuser",
+                "active": "Aktiv",
+                "inactive": "Inaktiv",
+                "pending": "Venter"
+            },
+            "headers": {
+                "name": "Navn",
+                "email": "E-post",
+                "status": "Status",
+                "joined": "Innmeldt",
+                "actions": "Handlinger"
+            },
+            "actions": {
+                "view": "Se detaljer"
+            },
+            "empty": "Ingen medlemmer funnet."
+        }
+    },
+    "Analytics": {
+        "months": {
+            "jan": "Jan",
+            "feb": "Feb",
+            "mar": "Mar",
+            "apr": "Apr",
+            "may": "Mai",
+            "jun": "Jun",
+            "jul": "Jul",
+            "aug": "Aug",
+            "sep": "Sep",
+            "oct": "Okt",
+            "nov": "Nov",
+            "dec": "Des"
+        },
+        "paymentStatus": {
+            "paid": "Betalt",
+            "pending": "Venter",
+            "failed": "Feilet"
+        },
+        "tooltips": {
+            "members": "Medlemmer",
+            "count": "Antall"
+        }
+    },
+    "Common": {
+        "loading": "Laster...",
+        "error": "Det oppstod en feil"
+    },
+    "Payment": {
+        "errorPrefix": "Feil: ",
+        "unexpectedError": "En uventet feil oppstod",
+        "payWithVipps": "Betal {amount},- med Vipps"
+    }
+}
