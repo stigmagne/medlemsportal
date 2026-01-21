@@ -7,6 +7,7 @@ import { startOfMonth, subMonths, endOfMonth, format } from 'date-fns'
 import { nb } from 'date-fns/locale'
 import { getTranslations } from 'next-intl/server'
 import SubscriptionStatusCard from '@/components/dashboard/SubscriptionStatusCard'
+import { RecentActivity } from '@/components/dashboard/recent-activity'
 
 export default async function OrganizationDashboard({
     params,
@@ -310,15 +311,8 @@ export default async function OrganizationDashboard({
                 </div>
             </div>
 
-            {/* Recent Activity Placeholder */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    {t('activity.title')}
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-                    {t('activity.empty')}
-                </p>
-            </div>
+            {/* Recent Activity */}
+            <RecentActivity orgSlug={slug} orgId={org_id} />
         </div>
     )
 }

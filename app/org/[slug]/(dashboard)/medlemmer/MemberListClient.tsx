@@ -6,7 +6,8 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Papa from 'papaparse'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Search, Users } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -219,8 +220,8 @@ export default function MemberListClient({
                                 key={status}
                                 onClick={() => handleStatusFilterChange(status)}
                                 className={`px-4 py-2 rounded-lg font-medium transition-colors capitalize ${currentStatus === status
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                     }`}
                             >
                                 {status === 'all' ? t('filter.allStatus') : t(`filter.${status}`)}
@@ -232,63 +233,71 @@ export default function MemberListClient({
 
             {/* Table - Desktop */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hidden md:block">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {t('headers.name')}
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {t('headers.email')}
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {t('headers.status')}
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {t('headers.actions')}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {members.length > 0 ? members.map((member) => (
-                                <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">
-                                        {member.first_name} {member.last_name}
-                                        <span className="block text-xs text-gray-500 dark:text-gray-400 font-normal">#{member.member_number}</span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                                        {member.email || '-'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded ${member.membership_status === 'active'
+                {members.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {t('headers.name')}
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {t('headers.email')}
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {t('headers.status')}
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {t('headers.actions')}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {members.map((member) => (
+                                    <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">
+                                            {member.first_name} {member.last_name}
+                                            <span className="block text-xs text-gray-500 dark:text-gray-400 font-normal">#{member.member_number}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                            {member.email || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 text-xs font-medium rounded ${member.membership_status === 'active'
                                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                                                 : member.membership_status === 'inactive'
                                                     ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400'
                                                     : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                                            }`}>
-                                            {member.membership_status === 'active' ? t('filter.active') : member.membership_status === 'inactive' ? t('filter.inactive') : t('filter.pending')}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <Link
-                                            href={`/org/${slug}/medlemmer/${member.id}`}
-                                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                        >
-                                            Rediger
-                                        </Link>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                        Ingen medlemmer funnet.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                                }`}>
+                                                {member.membership_status === 'active' ? t('filter.active') : member.membership_status === 'inactive' ? t('filter.inactive') : t('filter.pending')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            <Link
+                                                href={`/org/${slug}/medlemmer/${member.id}`}
+                                                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                            >
+                                                Rediger
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="p-8">
+                        <EmptyState
+                            icon={Users}
+                            title="Ingen medlemmer funnet"
+                            description="Prøv å endre søkefilteret eller legg til et nytt medlem."
+                            action={{
+                                label: "Legg til medlem",
+                                onClick: () => router.push(`/org/${slug}/medlemmer/ny`)
+                            }}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Mobile Cards */}
@@ -303,8 +312,8 @@ export default function MemberListClient({
                                 <p className="text-sm text-gray-500 dark:text-gray-400">#{member.member_number}</p>
                             </div>
                             <span className={`px-2 py-1 text-xs font-medium rounded ${member.membership_status === 'active'
-                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800'
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800'
                                 }`}>
                                 {member.membership_status}
                             </span>
@@ -317,7 +326,11 @@ export default function MemberListClient({
                         </Link>
                     </div>
                 )) : (
-                    <div className="text-center py-12 text-gray-500">Ingen medlemmer funnet.</div>
+                    <EmptyState
+                        icon={Users}
+                        title="Ingen medlemmer"
+                        description="Ingen medlemmer matcher kriteriene."
+                    />
                 )}
             </div>
 

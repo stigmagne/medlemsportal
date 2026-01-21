@@ -9,6 +9,7 @@ import {
     CreditCard, Receipt, Users2, FileText, Settings, User,
     Wallet, ChevronDown, ChevronRight, Folder, PieChart, MessageSquare
 } from 'lucide-react'
+import { Breadcrumbs } from '@/components/breadcrumbs'
 
 interface DashboardShellProps {
     children: React.ReactNode
@@ -209,12 +210,17 @@ export default function DashboardShell({
                     {navItems.map((item, index) => {
                         if (item.children) {
                             // Render Group
-                            const isOpen = openGroups[item.label] || item.children.some(c => c.href && isActive(c.href))
+                            const isChildActive = item.children.some(c => c.href && isActive(c.href))
+                            const isOpen = openGroups[item.label] || isChildActive
                             return (
                                 <div key={index} className="space-y-1">
                                     <button
                                         onClick={() => toggleGroup(item.label)}
-                                        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700`}
+                                        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors 
+                                            ${isChildActive
+                                                ? 'text-blue-700 dark:text-blue-200 bg-blue-50/50 dark:bg-blue-900/5'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             {item.icon}
@@ -322,6 +328,7 @@ export default function DashboardShell({
 
             {/* Main Content */}
             <main className="flex-1 p-8 md:p-8 pt-6 overflow-x-hidden">
+                <Breadcrumbs className="mb-6" />
                 {children}
             </main>
         </div>

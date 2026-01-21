@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/empty-state'
+import { CreditCard } from 'lucide-react'
 
 interface Payment {
     id: string
@@ -129,101 +131,102 @@ export default function PaymentsView({
             </div>
 
             {/* Tabell */}
-            <Card>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>#</TableHead>
-                            <TableHead>Medlem</TableHead>
-                            <TableHead>Beskrivelse</TableHead>
-                            <TableHead>Beløp</TableHead>
-                            <TableHead>Til abonnement</TableHead>
-                            <TableHead>Gebyr</TableHead>
-                            <TableHead className="text-right">Til dere</TableHead>
-                            <TableHead>Dato</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredPayments.length === 0 && (
+            {filteredPayments.length === 0 ? (
+                <EmptyState
+                    icon={CreditCard}
+                    title="Ingen betalinger funnet"
+                    description="Det er ingen betalinger som matcher filteret ditt."
+                />
+            ) : (
+                <Card>
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                                    Ingen betalinger funnet i denne kategorien.
-                                </TableCell>
+                                <TableHead>#</TableHead>
+                                <TableHead>Medlem</TableHead>
+                                <TableHead>Beskrivelse</TableHead>
+                                <TableHead>Beløp</TableHead>
+                                <TableHead>Til abonnement</TableHead>
+                                <TableHead>Gebyr</TableHead>
+                                <TableHead className="text-right">Til dere</TableHead>
+                                <TableHead>Dato</TableHead>
                             </TableRow>
-                        )}
-                        {filteredPayments.map((payment, index) => {
-                            const subDed = Number(payment.subscription_deduction) || 0
-                            const fee = Number(payment.service_fee) || 0
-                            const payout = Number(payment.payout_to_org) || 0
-                            const memberName = payment.member ? `${payment.member.first_name || ''} ${payment.member.last_name || ''}`.trim() : 'Ukjent'
+                        </TableHeader>
+                        <TableBody>
+                            {filteredPayments.map((payment, index) => {
+                                const subDed = Number(payment.subscription_deduction) || 0
+                                const fee = Number(payment.service_fee) || 0
+                                const payout = Number(payment.payout_to_org) || 0
+                                const memberName = payment.member ? `${payment.member.first_name || ''} ${payment.member.last_name || ''}`.trim() : 'Ukjent'
 
-                            return (
-                                <TableRow key={payment.id}>
-                                    <TableCell className="font-medium">
-                                        #{filteredPayments.length - index}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span>{memberName || payment.member?.email}</span>
-                                            {memberName && <span className="text-xs text-muted-foreground">{payment.member?.email}</span>}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {payment.event_id ? (
-                                            <Link
-                                                href={`/org/${orgSlug}/arrangementer/${payment.event_id}`}
-                                                className="text-blue-600 hover:underline font-medium"
-                                            >
-                                                {payment.description || 'Arrangement'}
-                                            </Link>
-                                        ) : (
-                                            <span className="text-gray-700">
-                                                {payment.description || (payment.type === 'membership_fee' ? 'Medlemskontingent' : 'Annet')}
-                                            </span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>{Number(payment.amount).toFixed(2)} kr</TableCell>
-                                    <TableCell>
-                                        {subDed > 0 ? (
-                                            <Badge variant="secondary">
-                                                {subDed.toFixed(2)} kr
-                                            </Badge>
-                                        ) : (
-                                            <span className="text-muted-foreground">-</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {fee > 0 ? (
-                                            <span className="text-muted-foreground">
-                                                {fee.toFixed(2)} kr
-                                            </span>
-                                        ) : (
-                                            <span className="text-muted-foreground">-</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium">
-                                        {payout.toFixed(2)} kr
-                                    </TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
-                                        {new Date(payment.created_at).toLocaleDateString('nb-NO')}
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        })}
-                    </TableBody>
-                    <TableFooter>
-                        <TableRow>
-                            <TableCell colSpan={6} className="font-medium">
-                                TOTALT UTBETALT ({filter === 'all' ? 'Alle' : filter === 'membership' ? 'Kontingent' : 'Arrangement'})
-                            </TableCell>
-                            <TableCell className="text-right font-bold text-lg">
-                                {totalPayout.toFixed(2)} kr
-                            </TableCell>
-                            <TableCell />
-                        </TableRow>
-                    </TableFooter>
-                </Table>
-            </Card>
+                                return (
+                                    <TableRow key={payment.id}>
+                                        <TableCell className="font-medium">
+                                            #{filteredPayments.length - index}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span>{memberName || payment.member?.email}</span>
+                                                {memberName && <span className="text-xs text-muted-foreground">{payment.member?.email}</span>}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {payment.event_id ? (
+                                                <Link
+                                                    href={`/org/${orgSlug}/arrangementer/${payment.event_id}`}
+                                                    className="text-blue-600 hover:underline font-medium"
+                                                >
+                                                    {payment.description || 'Arrangement'}
+                                                </Link>
+                                            ) : (
+                                                <span className="text-gray-700">
+                                                    {payment.description || (payment.type === 'membership_fee' ? 'Medlemskontingent' : 'Annet')}
+                                                </span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>{Number(payment.amount).toFixed(2)} kr</TableCell>
+                                        <TableCell>
+                                            {subDed > 0 ? (
+                                                <Badge variant="secondary">
+                                                    {subDed.toFixed(2)} kr
+                                                </Badge>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {fee > 0 ? (
+                                                <span className="text-muted-foreground">
+                                                    {fee.toFixed(2)} kr
+                                                </span>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">
+                                            {payout.toFixed(2)} kr
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {new Date(payment.created_at).toLocaleDateString('nb-NO')}
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                        <TableFooter>
+                            <TableRow>
+                                <TableCell colSpan={6} className="font-medium">
+                                    TOTALT UTBETALT ({filter === 'all' ? 'Alle' : filter === 'membership' ? 'Kontingent' : 'Arrangement'})
+                                </TableCell>
+                                <TableCell className="text-right font-bold text-lg">
+                                    {totalPayout.toFixed(2)} kr
+                                </TableCell>
+                                <TableCell />
+                            </TableRow>
+                        </TableFooter>
+                    </Table>
+                </Card>
+            )}
         </div>
     )
 }

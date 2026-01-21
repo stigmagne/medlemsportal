@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export default async function SuperadminLayout({
     children,
@@ -67,6 +68,7 @@ export default async function SuperadminLayout({
                         </span>
                     </div>
                     <div className="flex items-center gap-4">
+                        <ThemeSwitcher />
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                             {userDisplayName}
                         </span>

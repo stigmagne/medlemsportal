@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
     title: "Din Forening - Medlemsregister",
@@ -21,7 +22,9 @@ export default async function RootLayout({
         <html lang={locale}>
             <body>
                 <NextIntlClientProvider messages={messages}>
-                    {children}
+                    <ThemeProvider>
+                        {children}
+                    </ThemeProvider>
                 </NextIntlClientProvider>
             </body>
         </html>
