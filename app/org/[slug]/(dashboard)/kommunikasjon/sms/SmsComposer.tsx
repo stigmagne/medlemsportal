@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, Send, Users } from "lucide-react"
-import { sendSms } from "../../../../actions/sms"
+import { sendSms } from "@/app/actions/sms"
 
 interface MemberGroup {
     id: string
