@@ -13,6 +13,7 @@ type SendEmailParams = {
     organizationId: string
     campaignId?: string
     memberId?: string
+    replyTo?: string | string[]
 }
 
 export async function sendEmail({
@@ -23,7 +24,8 @@ export async function sendEmail({
     from = process.env.RESEND_FROM_EMAIL || 'Din Forening <onboarding@resend.dev>', // Update this with verified domain later
     organizationId,
     campaignId,
-    memberId
+    memberId,
+    replyTo
 }: SendEmailParams) {
     try {
         const data = await resend.emails.send({
@@ -31,7 +33,8 @@ export async function sendEmail({
             to,
             subject,
             html,
-            text
+            text,
+            reply_to: replyTo as string | string[] | undefined
         })
 
         if (data.error) {

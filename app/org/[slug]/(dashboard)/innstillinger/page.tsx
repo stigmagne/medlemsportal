@@ -32,6 +32,8 @@ export default async function SettingsPage({
                     orgId={org.id}
                     initialFee={settings?.membership_fee || 0}
                     initialAccountNumber={settings?.account_number || ''}
+                    initialContactEmail={settings?.contact_email || ''}
+                    memberTypes={memberTypes}
                 />
                 <MemberTypesCard orgId={org.id} slug={slug} initialTypes={memberTypes} />
 

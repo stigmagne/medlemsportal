@@ -1,12 +1,14 @@
 'use client'
 
 import { updateOrganizationSettings } from '@/app/actions/settings'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { MemberType } from '@/app/actions/member-types'
 
-export default function SettingsForm({ orgId, initialFee, initialAccountNumber }: { orgId: string, initialFee: number, initialAccountNumber?: string }) {
+export default function SettingsForm({ orgId, initialFee, initialAccountNumber, initialContactEmail, memberTypes = [] }: { orgId: string, initialFee: number, initialAccountNumber?: string, initialContactEmail?: string, memberTypes?: MemberType[] }) {
     const [fee, setFee] = useState(initialFee)
     const [accountNumber, setAccountNumber] = useState(initialAccountNumber || '')
+    const [contactEmail, setContactEmail] = useState(initialContactEmail || '')
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -14,7 +16,8 @@ export default function SettingsForm({ orgId, initialFee, initialAccountNumber }
         setLoading(true)
         const res = await updateOrganizationSettings(orgId, {
             membershipFee: Number(fee),
-            accountNumber: accountNumber
+            accountNumber: accountNumber,
+            contactEmail: contactEmail
         })
         if (res.error) alert(res.error)
         else alert('Innstillinger lagret')
@@ -33,14 +36,45 @@ export default function SettingsForm({ orgId, initialFee, initialAccountNumber }
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Årlig Medlemskontingent (kr)
                         </label>
+                        {memberTypes.length > 0 ? (
+                            <select
+                                value={fee}
+                                onChange={(e) => setFee(Number(e.target.value))}
+                                className="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-800"
+                            >
+                                <option value={0}>Velg standard kontingent...</option>
+                                {memberTypes.map(type => (
+                                    <option key={type.id} value={type.fee}>
+                                        {type.name} ({type.fee} kr)
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                type="number"
+                                value={fee}
+                                onChange={(e) => setFee(Number(e.target.value))}
+                                className="w-full px-3 py-2 border rounded-md"
+                                min="0"
+                            />
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">Velg hvilken medlemskontingent som skal være standard.</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Kontakt-epost for Utgående Post
+                        </label>
                         <input
-                            type="number"
-                            value={fee}
-                            onChange={(e) => setFee(Number(e.target.value))}
+                            type="email"
+                            value={contactEmail}
+                            placeholder="post@forening.no"
+                            onChange={(e) => setContactEmail(e.target.value)}
                             className="w-full px-3 py-2 border rounded-md"
-                            min="0"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Standardpris hvis ingen medlemstype er valgt.</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Denne e-posten vil stå som avsender/svar-til. Må være en gyldig e-post.
+                        </p>
                     </div>
 
                     <div>

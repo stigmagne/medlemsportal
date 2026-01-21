@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function updateOrganizationSettings(orgId: string, data: { membershipFee?: number, accountNumber?: string }) {
+export async function updateOrganizationSettings(orgId: string, data: { membershipFee?: number, accountNumber?: string, contactEmail?: string }) {
     const supabase = await createClient()
 
     // Auth check
@@ -14,6 +14,7 @@ export async function updateOrganizationSettings(orgId: string, data: { membersh
     const updates: any = {}
     if (data.membershipFee !== undefined) updates.membership_fee = data.membershipFee
     if (data.accountNumber !== undefined) updates.account_number = data.accountNumber
+    if (data.contactEmail !== undefined) updates.contact_email = data.contactEmail
 
     const { error } = await supabase
         .from('organizations')
@@ -211,7 +212,7 @@ export async function getOrgSettings(orgId: string) {
     const supabase = await createClient()
     const { data } = await supabase
         .from('organizations')
-        .select('membership_fee, account_number')
+        .select('membership_fee, account_number, contact_email')
         .eq('id', orgId)
         .single()
     return data

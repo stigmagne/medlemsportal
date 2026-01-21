@@ -59,7 +59,7 @@ export async function createCampaign(org_id: string, subject: string, content: s
 export async function sendCampaign(org_id: string, campaignId: string) {
     const supabase = await createClient()
 
-    // 1. Fetch Campaign
+    // 1. Fetch Campaign & Org Details (contact_email, name)
     const { data: campaign } = await supabase
         .from('email_campaigns')
         .select('*')
@@ -67,8 +67,24 @@ export async function sendCampaign(org_id: string, campaignId: string) {
         .eq('organization_id', org_id)
         .single()
 
+    const { data: org } = await supabase
+        .from('organizations')
+        .select('name, contact_email')
+        .eq('id', org_id)
+        .single()
+
     if (!campaign) return { error: 'Campaign not found' }
+    if (!org) return { error: 'Organization not found' }
+
     if (campaign.status !== 'draft' && campaign.status !== 'failed') return { error: 'Campaign already sent or processing' }
+
+    // Prepare Sender Details
+    // From: "Forening Navn <onboarding@resend.dev>" (or custom domain if verified)
+    const fromName = org.name.replace(/[<>]/g, '') // Sanitize name
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const from = `"${fromName}" <${fromAddress}>`
+
+    const replyTo = org.contact_email ? org.contact_email : undefined
 
     // 2. Fetch Recipients based on filters
     let query = supabase
@@ -144,7 +160,9 @@ export async function sendCampaign(org_id: string, campaignId: string) {
             text: personalizedContent,
             organizationId: org_id,
             campaignId: campaign.id,
-            memberId: member.id
+            memberId: member.id,
+            from,
+            replyTo
         })
 
         // D. Update Status
