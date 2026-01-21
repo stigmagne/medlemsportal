@@ -108,7 +108,7 @@ export default async function Home() {
                             <FeatureCard
                                 icon={<CreditCard className="w-8 h-8 text-pink-500" />}
                                 title="Økonomi & Faktura"
-                                description="Send faktura med KID (kommer), betaling via Vipps, og hold oversikt over innbetalinger."
+                                description="Send faktura med KID (kommer), sikre betalinger via Stripe, og hold oversikt over innbetalinger."
                             />
                             <FeatureCard
                                 icon={<Shield className="w-8 h-8 text-indigo-500" />}
