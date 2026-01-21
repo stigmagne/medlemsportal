@@ -15,6 +15,7 @@ type Document = {
     access_level: 'public' | 'board' | 'admin'
     created_at: string
     file_path: string
+    category?: string
 }
 
 export default function DocumentListClient({
@@ -30,6 +31,12 @@ export default function DocumentListClient({
 }) {
     const [isUploadOpen, setIsUploadOpen] = useState(false)
     const [localDocuments, setLocalDocuments] = useState(documents)
+    const [selectedCategory, setSelectedCategory] = useState<string>('Alle')
+
+    const categories = ['Alle', ...Array.from(new Set(localDocuments.map(d => d.category || 'Generelt')))]
+    const filteredDocuments = selectedCategory === 'Alle'
+        ? localDocuments
+        : localDocuments.filter(d => (d.category || 'Generelt') === selectedCategory)
 
     const supabase = createClient()
 
@@ -111,7 +118,23 @@ export default function DocumentListClient({
                 )}
             </div>
 
-            {localDocuments.length === 0 ? (
+            {/* Category Filter */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                {categories.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${selectedCategory === cat
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                            }`}
+                    >
+                        {cat}
+                    </button>
+                ))}
+            </div>
+
+            {filteredDocuments.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-500 dark:text-gray-400">Ingen dokumenter funnet.</p>
@@ -119,7 +142,7 @@ export default function DocumentListClient({
             ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                     <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {localDocuments.map((doc) => (
+                        {filteredDocuments.map((doc) => (
                             <li key={doc.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between group">
                                 <div className="flex items-center gap-4 min-w-0">
                                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded text-blue-600 dark:text-blue-400">

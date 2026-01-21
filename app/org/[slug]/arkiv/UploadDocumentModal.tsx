@@ -14,6 +14,7 @@ type UploadDocumentModalProps = {
 export default function UploadDocumentModal({ orgId, onClose, onUploadSuccess }: UploadDocumentModalProps) {
     const [file, setFile] = useState<File | null>(null)
     const [accessLevel, setAccessLevel] = useState<'public' | 'board' | 'admin'>('board')
+    const [category, setCategory] = useState('Generelt')
     const [isUploading, setIsUploading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -46,7 +47,8 @@ export default function UploadDocumentModal({ orgId, onClose, onUploadSuccess }:
                     file_path: filePath,
                     size_bytes: file.size,
                     mime_type: file.type,
-                    access_level: accessLevel
+                    access_level: accessLevel,
+                    category: category
                 })
                 .select()
                 .single()
@@ -121,6 +123,24 @@ export default function UploadDocumentModal({ orgId, onClose, onUploadSuccess }:
                             {accessLevel === 'public' && 'Synlig for alle medlemmer i foreningen.'}
                             {accessLevel === 'admin' && 'Kun synlig for administratorer.'}
                         </p>
+                    </div>
+
+                    {/* Category */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Kategori
+                        </label>
+                        <select
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm"
+                        >
+                            <option value="Generelt">Generelt</option>
+                            <option value="Årsmøte">Årsmøte</option>
+                            <option value="Regnskap">Regnskap</option>
+                            <option value="Vedtekter">Vedtekter</option>
+                            <option value="Styret">Styret</option>
+                        </select>
                     </div>
 
                     <div className="flex justify-end gap-2 mt-6">
