@@ -20,7 +20,7 @@ export default async function MinSidePage({
     // Get organization
     const { data: organization } = await supabase
         .from('organizations')
-        .select('id')
+        .select('id, account_number')
         .eq('slug', slug)
         .single()
 
@@ -123,6 +123,7 @@ export default async function MinSidePage({
                                             feeId={fee.id}
                                             memberId={member.id}
                                             amount={fee.amount}
+                                            hasInvoiceOption={!!organization.account_number}
                                         />
                                     </div>
                                 </div>

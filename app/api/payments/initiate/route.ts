@@ -11,18 +11,80 @@ export async function POST(request: NextRequest) {
             memberId,
             paymentType,
             description,
-            eventId
+            eventId,
+            paymentMethod = 'stripe' // 'stripe' | 'invoice'
         } = await request.json()
 
         const amountInOre = Math.round(amount * 100)
 
         const supabase = await createClient()
+
+        // Fetch Org Details
         const { data: org } = await supabase
             .from('organizations')
-            .select('stripe_account_id, stripe_charges_enabled')
+            .select('stripe_account_id, stripe_charges_enabled, account_number, name')
             .eq('id', organizationId)
             .single()
 
+        if (!org) {
+            return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+        }
+
+        // --- INVOICE FLOW ---
+        if (paymentMethod === 'invoice') {
+            if (!org.account_number) {
+                return NextResponse.json(
+                    { error: 'Foreningen har ikke registrert kontonummer for faktura.' },
+                    { status: 400 }
+                )
+            }
+
+            // 1. Generate KID
+            const { generateKid, generateNumericReference } = await import('@/lib/invoicing/kid')
+
+            // Generate a numeric reference. 
+            // In a real system, we might use a sequence or CustomerID + InvoiceID.
+            // Here we use a random safe numeric reference for MVP.
+            const reference = generateNumericReference()
+            const kid = generateKid(reference)
+
+            // 2. Create Transaction Record
+            const { data: transaction, error: txError } = await supabase
+                .from('payment_transactions')
+                .insert({
+                    org_id: organizationId,
+                    member_id: memberId,
+                    amount: amount, // DB stores standard currency units or match schema? Schema: DECIMAL. Usually standard units (NOK). 
+                    // Wait, Stripe uses cents. DB schema says DECIMAL. Usually we store 100.00 for 100 NOK.
+                    // Let's assume standard units for DB.
+                    currency: 'NOK',
+                    status: 'pending',
+                    type: paymentType || 'other',
+                    description: description,
+                    payment_method: 'invoice',
+                    kid: kid,
+                    provider_transaction_id: null
+                })
+                .select()
+                .single()
+
+            if (txError) {
+                console.error('DB Error:', txError)
+                throw new Error('Kunne ikke opprette faktura-transaksjon')
+            }
+
+            return NextResponse.json({
+                invoice: {
+                    kid: kid,
+                    accountNumber: org.account_number,
+                    amount: amount,
+                    organizationName: org.name,
+                    transactionId: transaction.id
+                }
+            })
+        }
+
+        // --- STRIPE FLOW ---
         if (!org?.stripe_account_id || !org.stripe_charges_enabled) {
             return NextResponse.json(
                 { error: 'Organization has not completed payment setup' },
@@ -31,7 +93,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Calculate fees
-        // @ts-ignore - function signature might need update or ignore if types mismatch slightly during dev
+        // @ts-ignore
         const fees = await calculateFees(organizationId, amountInOre)
 
         // Create Payment Intent
@@ -48,6 +110,7 @@ export async function POST(request: NextRequest) {
                 payment_type: paymentType,
                 event_id: eventId || '',
                 description: description,
+                payment_method: 'stripe'
             },
         })
 

@@ -75,11 +75,7 @@ export default function DashboardShell({
             label: 'Arrangementer',
             icon: <Calendar className="w-5 h-5" />
         },
-        {
-            href: `/org/${org.slug}/kommunikasjon`,
-            label: t('nav.communication'),
-            icon: <MessageSquare className="w-5 h-5" />
-        },
+
         {
             label: 'Økonomi',
             icon: <Wallet className="w-5 h-5" />,
@@ -99,40 +95,54 @@ export default function DashboardShell({
             ]
         },
         {
-            href: `/org/${org.slug}/moter`,
-            label: 'Møter',
-            icon: <Users2 className="w-5 h-5" />
-        },
-        {
             href: `/org/${org.slug}/arkiv`,
             label: 'Dokumentarkiv',
             icon: <Folder className="w-5 h-5" />
         },
         {
-            href: `/org/${org.slug}/saker/ny`, // TODO: Point to /saker list when ready
-            label: 'Ny Sak',
-            icon: <FileText className="w-5 h-5" />
+            href: `/org/${org.slug}/kommunikasjon`,
+            label: t('nav.communication'),
+            icon: <MessageSquare className="w-5 h-5" />,
+            children: [
+                {
+                    href: `/org/${org.slug}/kommunikasjon`,
+                    label: 'E-post',
+                    icon: <MessageSquare className="w-5 h-5" />
+                },
+                {
+                    href: `/org/${org.slug}/kommunikasjon/sms`,
+                    label: 'SMS',
+                    icon: <MessageSquare className="w-5 h-5" />
+                }
+            ]
+        },
+        {
+            href: `/org/${org.slug}/moter`,
+            label: 'Møter & Saker',
+            icon: <Users2 className="w-5 h-5" />
         },
         {
             href: `/org/${org.slug}/innstillinger`,
             label: 'Innstillinger',
-            icon: <Settings className="w-5 h-5" />
-        },
-        {
-            href: `/org/${org.slug}/innstillinger/rapporter`,
-            label: 'Rapportering',
-            icon: <PieChart className="w-5 h-5" />
-        },
-        {
-            href: `/org/${org.slug}/kommunikasjon/sms`,
-            label: 'Kommunikasjon',
-            icon: <MessageSquare className="w-5 h-5" />
+            icon: <Settings className="w-5 h-5" />,
+            children: [
+                {
+                    href: `/org/${org.slug}/innstillinger`,
+                    label: 'Generelt',
+                    icon: <Settings className="w-5 h-5" />
+                },
+                {
+                    href: `/org/${org.slug}/innstillinger/rapporter`,
+                    label: 'Rapportering',
+                    icon: <PieChart className="w-5 h-5" />
+                }
+            ]
         }
     ]
 
     const memberNavItems = [
         {
-            href: `/org/${org.slug}/minside`,
+            href: `/org/${org.slug}/min-side`,
             label: t('nav.minSide'),
             icon: <User className="w-5 h-5" />
         }

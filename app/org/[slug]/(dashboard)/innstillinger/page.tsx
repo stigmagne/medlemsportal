@@ -28,6 +28,11 @@ export default async function SettingsPage({
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
+                <SettingsForm
+                    orgId={org.id}
+                    initialFee={settings?.membership_fee || 0}
+                    initialAccountNumber={settings?.account_number || ''}
+                />
                 <MemberTypesCard orgId={org.id} slug={slug} initialTypes={memberTypes} />
 
                 <RenewalCard orgId={org.id} />

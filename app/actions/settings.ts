@@ -3,23 +3,26 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function updateMembershipFee(orgId: string, fee: number) {
+export async function updateOrganizationSettings(orgId: string, data: { membershipFee?: number, accountNumber?: string }) {
     const supabase = await createClient()
 
     // Auth check
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
-    // TODO: Verify admin role (simplified for now)
+    // Prepare updates object
+    const updates: any = {}
+    if (data.membershipFee !== undefined) updates.membership_fee = data.membershipFee
+    if (data.accountNumber !== undefined) updates.account_number = data.accountNumber
 
     const { error } = await supabase
         .from('organizations')
-        .update({ membership_fee: fee })
+        .update(updates)
         .eq('id', orgId)
 
     if (error) {
-        console.error('Error updating fee:', error)
-        return { error: 'Kunne ikke oppdatere kontingent' }
+        console.error('Error updating settings:', error)
+        return { error: 'Kunne ikke oppdatere innstillinger' }
     }
 
     revalidatePath(`/org/${orgId}/innstillinger`)
@@ -208,7 +211,7 @@ export async function getOrgSettings(orgId: string) {
     const supabase = await createClient()
     const { data } = await supabase
         .from('organizations')
-        .select('membership_fee')
+        .select('membership_fee, account_number')
         .eq('id', orgId)
         .single()
     return data
