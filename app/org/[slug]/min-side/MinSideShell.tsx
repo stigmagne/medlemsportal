@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
 export default function MinSideShell({
@@ -14,6 +15,11 @@ export default function MinSideShell({
     orgName: string
 }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const pathname = usePathname()
+
+    const isActive = (path: string) => {
+        return pathname === path
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -46,37 +52,43 @@ export default function MinSideShell({
                         <div className="hidden md:ml-6 md:flex md:space-x-8">
                             <Link
                                 href={`/org/${slug}/min-side`}
-                                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                                className={`${isActive(`/org/${slug}/min-side`) ? 'border-blue-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                             >
                                 Oversikt
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/profil`}
-                                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/profil`) ? 'border-blue-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                             >
                                 Min Profil
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/dugnad`}
-                                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/dugnad`) ? 'border-blue-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                             >
                                 Dugnad
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/booking`}
-                                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/booking`) ? 'border-blue-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                             >
                                 Booking
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/utlegg`}
-                                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/utlegg`) ? 'border-blue-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                             >
                                 Utlegg
                             </Link>
                             <Link
+                                href={`/org/${slug}/min-side/medlemskort`}
+                                className={`${isActive(`/org/${slug}/min-side/medlemskort`) ? 'border-blue-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                            >
+                                Medlemskort
+                            </Link>
+                            <Link
                                 href={`/org/${slug}/arkiv`}
-                                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                                className={`${isActive(`/org/${slug}/arkiv`) ? 'border-blue-500 text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                             >
                                 Arkiv
                             </Link>
@@ -110,42 +122,49 @@ export default function MinSideShell({
                         <div className="pt-2 pb-3 space-y-1">
                             <Link
                                 href={`/org/${slug}/min-side`}
-                                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                                className={`${isActive(`/org/${slug}/min-side`) ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-200' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Oversikt
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/profil`}
-                                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/profil`) ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-200' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Min Profil
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/dugnad`}
-                                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/dugnad`) ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-200' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Dugnad
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/booking`}
-                                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/booking`) ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-200' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Booking
                             </Link>
                             <Link
                                 href={`/org/${slug}/min-side/utlegg`}
-                                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                                className={`${isActive(`/org/${slug}/min-side/utlegg`) ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-200' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Utlegg
                             </Link>
                             <Link
+                                href={`/org/${slug}/min-side/medlemskort`}
+                                className={`${isActive(`/org/${slug}/min-side/medlemskort`) ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-200' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                Medlemskort
+                            </Link>
+                            <Link
                                 href={`/org/${slug}/arkiv`}
-                                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                                className={`${isActive(`/org/${slug}/arkiv`) ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-200' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Arkiv

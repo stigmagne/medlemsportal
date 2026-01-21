@@ -182,13 +182,12 @@ export default async function MinSidePage({
                             >
                                 {t('actions.editProfile')}
                             </Link>
-                            {/* Future feature: Membership Card */}
-                            <button
-                                disabled
-                                className="block w-full text-center px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-transparent rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
+                            <Link
+                                href={`/org/${slug}/min-side/medlemskort`}
+                                className="block w-full text-center px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                             >
                                 {t('actions.membershipCard')}
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
