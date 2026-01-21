@@ -8,15 +8,7 @@ import { FileText, Download, Trash2, Lock, Globe, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import UploadDocumentModal from './UploadDocumentModal'
 
-type Document = {
-    id: string
-    name: string
-    size_bytes: number | null
-    access_level: 'public' | 'board' | 'admin'
-    created_at: string
-    file_path: string
-    category?: string
-}
+import { Document } from './types'
 
 export default function DocumentListClient({
     documents,

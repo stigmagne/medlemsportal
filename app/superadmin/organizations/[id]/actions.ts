@@ -9,6 +9,7 @@ export type SubscriptionUpdateData = {
     year?: number
     balance?: number
     expiry_date?: string
+    custom_annual_fee?: number
 }
 
 export async function updateOrganizationSubscription(
@@ -34,6 +35,7 @@ export async function updateOrganizationSubscription(
 
     if (data.balance !== undefined) updates.subscription_balance = data.balance
     if (data.year !== undefined) updates.subscription_year = data.year
+    if (data.custom_annual_fee !== undefined) updates.custom_annual_fee = data.custom_annual_fee
 
     // Check if we can save plan/status. 
     // If the user hasn't added these columns, this might fail. 

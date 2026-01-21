@@ -11,6 +11,7 @@ interface SubscriptionManagerProps {
         subscription_balance?: number
         subscription_year?: number
         subscription_expiry?: string
+        custom_annual_fee?: number
     }
     availablePlans: {
         id: string
@@ -28,6 +29,7 @@ export default function SubscriptionManager({ orgId, initialData, availablePlans
     const [status, setStatus] = useState(initialData.subscription_status || 'active')
     const [balance, setBalance] = useState(initialData.subscription_balance?.toString() || '990')
     const [year, setYear] = useState(initialData.subscription_year?.toString() || new Date().getFullYear().toString())
+    const [customFee, setCustomFee] = useState(initialData.custom_annual_fee?.toString() || '')
 
     const handleSave = async () => {
         startTransition(async () => {
@@ -35,7 +37,8 @@ export default function SubscriptionManager({ orgId, initialData, availablePlans
                 plan,
                 status,
                 balance: parseFloat(balance),
-                year: parseInt(year)
+                year: parseInt(year),
+                custom_annual_fee: customFee ? parseFloat(customFee) : undefined
             })
 
             if (res.success) {
@@ -85,6 +88,20 @@ export default function SubscriptionManager({ orgId, initialData, availablePlans
                             ))}
                             <option value="custom">Annet / Egendefinert</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Egendefinert Årsavgift (Standard: 990)
+                        </label>
+                        <input
+                            type="number"
+                            value={customFee}
+                            onChange={(e) => setCustomFee(e.target.value)}
+                            placeholder="La stå tom for standard (990,-)"
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Dette beløpet brukes ved beregning av neste årsavgift.</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -158,6 +175,11 @@ export default function SubscriptionManager({ orgId, initialData, availablePlans
                     <dd className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                         {plan}
                     </dd>
+                    {customFee && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            Egendefinert pris: {customFee},-
+                        </p>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

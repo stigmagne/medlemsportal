@@ -5,10 +5,12 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { X, Upload, Loader2, AlertCircle } from 'lucide-react'
 
+import { Document } from './types'
+
 type UploadDocumentModalProps = {
     orgId: string
     onClose: () => void
-    onUploadSuccess: (doc: any) => void
+    onUploadSuccess: (doc: Document) => void
 }
 
 export default function UploadDocumentModal({ orgId, onClose, onUploadSuccess }: UploadDocumentModalProps) {

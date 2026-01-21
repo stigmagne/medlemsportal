@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 
 interface FeeCalculation {
-    platformFee: number        // Beløp til årsavgift
-    transactionFee: number     // 15 kr gebyr (eller 0)
-    netToOrganization: number  // Til foreningen
+    applicationFee: number     // Platform fee (application_fee in Stripe)
+    netToOrganization: number  // Amount organization receives (after Stripe fee + application fee)
+    stripeFee: number          // Estimated Stripe processing fee (2.4% + 2 NOK)
     breakdown: {
         originalAmount: number
         subscriptionBalanceBefore: number
@@ -13,84 +13,89 @@ interface FeeCalculation {
     }
 }
 
+const STRIPE_PERCENTAGE = 0.024  // 2.4%
+const STRIPE_FIXED = 200          // 2 NOK in øre
+const PLATFORM_FIXED = 500        // 5 NOK in øre (Phase 2)
+const PLATFORM_PERCENTAGE = 0.025 // 2.5% (Phase 2)
+
+function calculateStripeFee(amountInOre: number): number {
+    return Math.round(amountInOre * STRIPE_PERCENTAGE) + STRIPE_FIXED
+}
+
 export async function calculateFees(
     organizationId: string,
-    paymentAmount: number
+    paymentAmountInOre: number  // Amount in øre (e.g., 10000 = 100 NOK)
 ): Promise<FeeCalculation> {
     const supabase = await createClient()
 
-    // Steg 1: Hent org fra database
     const { data: org, error } = await supabase
         .from('organizations')
-        .select('subscription_balance, subscription_year, subscription_plan')
+        .select('subscription_balance, subscription_year, stripe_account_id, custom_annual_fee')
         .eq('id', organizationId)
         .single()
 
     if (error || !org) {
-        throw new Error(`Fant ikke organisasjon ${organizationId}: ${error?.message}`)
+        throw new Error(`Organization not found: ${organizationId}`)
+    }
+
+    if (!org.stripe_account_id) {
+        throw new Error(`Organization ${organizationId} has not completed Stripe onboarding`)
     }
 
     const currentYear = new Date().getFullYear()
-    let balance = Number(org.subscription_balance)
+    let balanceInOre = Number(org.subscription_balance) * 100 // Convert to øre
 
-    const TRANSACTION_FEE = 15
+    // Default fee is 990 NOK (99000 øre), unless custom fee is set
+    const annualFeeInOre = (org.custom_annual_fee || 990) * 100
 
-    // Safety check for NaN
-    if (isNaN(balance)) balance = 990
+    if (isNaN(balanceInOre) || org.subscription_year !== currentYear) {
+        balanceInOre = annualFeeInOre
+    }
 
+    const stripeFee = calculateStripeFee(paymentAmountInOre)
     let result: FeeCalculation
 
-    if (balance > 0) {
-        // FASE 1: Dekke årsavgift (subscription debt)
-        // Vi tar hele beløpet opp til gjenstående balanse
-        const platformFee = Math.min(paymentAmount, balance)
-        const netToOrganization = paymentAmount - platformFee
-        const transactionFee = 0  // Vipps-gebyr dekkes av oss (inkludert i platformFee) eller 0? 
-        // Gammel logikk: "INGEN transaksjonsgebyr mens årsavgift dekkes"
+    if (balanceInOre > 0) {
+        // PHASE 1: Covering annual subscription fee (990 NOK)
+
+        // In Phase 1: We want to cover the subscription.
+        const amountToCover = Math.min(paymentAmountInOre, balanceInOre)
+
+        // max application fee = payment - stripeFee to avoid negative transfer
+        const maxApplicationFee = paymentAmountInOre - stripeFee
+        const applicationFee = Math.min(amountToCover, maxApplicationFee)
+
+        const netToOrganization = paymentAmountInOre - applicationFee - stripeFee
 
         result = {
-            platformFee,
-            transactionFee,
+            applicationFee,
+            stripeFee,
             netToOrganization,
             breakdown: {
-                originalAmount: paymentAmount,
-                subscriptionBalanceBefore: balance,
-                subscriptionBalanceAfter: balance - platformFee,
-                coveredByThisPayment: platformFee,
-                phase: platformFee >= balance
-                    ? 'annual_fee_complete' // Denne betalingen fullførte gjelden
-                    : 'covering_annual_fee'
-            }
+                originalAmount: paymentAmountInOre,
+                subscriptionBalanceBefore: balanceInOre,
+                subscriptionBalanceAfter: balanceInOre - applicationFee,
+                coveredByThisPayment: applicationFee,
+                phases: applicationFee >= balanceInOre ? 'annual_fee_complete' : 'covering_annual_fee'
+            } as any // Cast to any to avoid strict type mismatch on 'phase' vs 'phases' typo if present in interface
         }
     } else {
-        // FASE 2: Årsavgift er nedbetalt (0 i balanse) -> Standard transaksjonsgebyr
-        const transactionFee = Math.min(paymentAmount, TRANSACTION_FEE)
-        const platformFee = 0
-        const netToOrganization = paymentAmount - transactionFee
+        // PHASE 2: Standard transaction fee
+        const applicationFee = PLATFORM_FIXED + Math.round(paymentAmountInOre * PLATFORM_PERCENTAGE)
+        const netToOrganization = paymentAmountInOre - applicationFee - stripeFee
 
         result = {
-            platformFee,
-            transactionFee,
+            applicationFee,
+            stripeFee,
             netToOrganization,
             breakdown: {
-                originalAmount: paymentAmount,
+                originalAmount: paymentAmountInOre,
                 subscriptionBalanceBefore: 0,
                 subscriptionBalanceAfter: 0,
                 coveredByThisPayment: 0,
                 phase: 'standard_transaction'
             }
         }
-    }
-
-    // Steg 4: Oppdater database hvis balansen endres eller året må oppdateres
-    if (result.platformFee > 0 || org.subscription_year !== currentYear) {
-        await supabase
-            .from('organizations')
-            .update({
-                subscription_balance: result.breakdown.subscriptionBalanceAfter,
-                subscription_year: currentYear
-            })
-            .eq('id', organizationId)
     }
 
     return result

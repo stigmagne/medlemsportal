@@ -6,7 +6,16 @@ jest.mock('@/lib/supabase/server', () => ({
     createClient: jest.fn()
 }));
 
-describe('calculateFees', () => {
+const STRIPE_FIXED = 200; // 2 NOK
+const STRIPE_PERCENTAGE = 0.024;
+const PLATFORM_FIXED = 500; // 5 NOK
+const PLATFORM_PERCENTAGE = 0.025;
+
+function expectedStripeFee(amount: number) {
+    return Math.round(amount * STRIPE_PERCENTAGE) + STRIPE_FIXED;
+}
+
+describe('calculateFees (Stripe Connect)', () => {
     let mockSupabase: any;
 
     beforeEach(() => {
@@ -20,8 +29,7 @@ describe('calculateFees', () => {
         (createClient as jest.Mock).mockResolvedValue(mockSupabase);
     });
 
-    const mockOrg = (balance: number, year: number = new Date().getFullYear(), planName: string = 'Årsabonnement', planPrice: number = 990) => {
-        // Setup mock for organizations query
+    const mockOrg = (balance: number, year: number = new Date().getFullYear(), stripeId: string | null = 'acct_123', customFee: number | null = null) => {
         mockSupabase.from.mockImplementation((table: string) => {
             if (table === 'organizations') {
                 return {
@@ -31,90 +39,83 @@ describe('calculateFees', () => {
                         data: {
                             subscription_balance: balance,
                             subscription_year: year,
-                            subscription_plan: planName
+                            stripe_account_id: stripeId,
+                            custom_annual_fee: customFee
                         }
-                    }),
-                    // Also mock update for subsequent calls
-                    update: mockSupabase.update
-                }
-            }
-            if (table === 'subscription_plans') {
-                return {
-                    select: jest.fn().mockReturnThis(),
-                    eq: jest.fn().mockReturnThis(),
-                    single: jest.fn().mockResolvedValue({ data: { price: planPrice } })
+                    })
                 }
             }
             return mockSupabase
         })
     };
 
-    const verifyUpdate = (expectedBalance: number) => {
-        expect(mockSupabase.update).toHaveBeenCalledWith(expect.objectContaining({
-            subscription_balance: expectedBalance,
-            subscription_year: new Date().getFullYear()
-        }));
-    };
+    test('Scenario A: New Year (990 NOK balance) - 200 NOK payment', async () => {
+        mockOrg(990); // 990 NOK debt
+        const amountInOre = 20000; // 200 NOK
 
-    test('Scenario A: New Year (990 balance) - 200 payment', async () => {
-        mockOrg(990); // 990 remaining
-        const res = await calculateFees('org1', 200);
+        const res = await calculateFees('org1', amountInOre);
 
-        expect(res.platformFee).toBe(200);
-        expect(res.transactionFee).toBe(0);
+        const stripeFee = expectedStripeFee(amountInOre); // ~680
+        const maxAppFee = amountInOre - stripeFee; // 19320
+
+        // Entire amount covers debt, so App Fee takes all (minus stripe fee)
+        expect(res.applicationFee).toBe(maxAppFee);
+        expect(res.stripeFee).toBe(stripeFee);
         expect(res.netToOrganization).toBe(0);
         expect(res.breakdown.phase).toBe('covering_annual_fee');
-
-        verifyUpdate(790); // 990 - 200 = 790
     });
 
-    test('Scenario B: Partial (790 balance) - 500 payment', async () => {
-        mockOrg(790);
-        const res = await calculateFees('org1', 500);
-
-        expect(res.platformFee).toBe(500);
-        expect(res.transactionFee).toBe(0);
-        expect(res.netToOrganization).toBe(0);
-
-        verifyUpdate(290); // 790 - 500 = 290
-    });
-
-    test('Scenario C: Soft Cap (190 balance) - 200 payment', async () => {
-        mockOrg(190);
-        const res = await calculateFees('org1', 200);
-
-        // Remaining fee is 190. Payment is 200.
-        // Platform gets 190. Org gets 10. No tx fee.
-        expect(res.platformFee).toBe(190);
-        expect(res.transactionFee).toBe(0);
-        expect(res.netToOrganization).toBe(10);
-        expect(res.breakdown.phase).toBe('annual_fee_complete');
-
-        verifyUpdate(0); // Fully paid
-    });
-
-    test('Scenario D: Full Paid (0 balance) - 200 payment', async () => {
+    test('Scenario B: Annual Fee Complete (0 NOK balance) - 200 NOK payment', async () => {
         mockOrg(0);
-        const res = await calculateFees('org1', 200);
+        const amountInOre = 20000; // 200 NOK
 
-        expect(res.platformFee).toBe(0);
-        expect(res.transactionFee).toBe(15);
-        expect(res.netToOrganization).toBe(185);
+        const res = await calculateFees('org1', amountInOre);
+
+        const stripeFee = expectedStripeFee(amountInOre); // 680
+        const appFee = PLATFORM_FIXED + Math.round(amountInOre * PLATFORM_PERCENTAGE); // 500 + 500 = 1000
+
+        expect(res.applicationFee).toBe(appFee); // 1000 (10 NOK)
+        expect(res.stripeFee).toBe(stripeFee); // 680 (6.80 NOK)
+        expect(res.netToOrganization).toBe(amountInOre - appFee - stripeFee); // 18320
         expect(res.breakdown.phase).toBe('standard_transaction');
-
-        // Should not update org if balance is 0 and year is correct
-        expect(mockSupabase.update).not.toHaveBeenCalled();
     });
 
-    test('Scenario: Previous Year Reset', async () => {
-        mockOrg(0, 2020); // Paid 0 (full) in 2020, but now it's a new year
-        const res = await calculateFees('org1', 200);
+    test('Scenario C: No Stripe Account - Should throw', async () => {
+        mockOrg(990, new Date().getFullYear(), null);
 
-        // Lazy reset should set balance to 990 internally
-        // Payment 200 -> Platform gets 200
-        expect(res.platformFee).toBe(200);
-        expect(res.breakdown.subscriptionBalanceBefore).toBe(990);
+        await expect(calculateFees('org1', 10000))
+            .rejects
+            .toThrow('not completed Stripe onboarding');
+    });
 
-        verifyUpdate(790); // Updated with current year and new balance
+    test('Scenario D: Previous Year Reset', async () => {
+        mockOrg(0, 2020); // Paid in 2020, now new year
+        const amountInOre = 20000;
+
+        const res = await calculateFees('org1', amountInOre);
+
+        // Should reset to 990 NOK debt
+        // Payment 200 covers part of 990.
+        // App Fee takes all (minus stripe).
+        const stripeFee = expectedStripeFee(amountInOre);
+        const maxAppFee = amountInOre - stripeFee;
+
+        expect(res.applicationFee).toBe(maxAppFee);
+        expect(res.breakdown.subscriptionBalanceBefore).toBe(99000); // 990 * 100
+    });
+
+    test('Scenario E: Custom Annual Fee (5000 NOK)', async () => {
+        // Mock a new year with a custom fee of 5000 NOK set on the org
+        mockOrg(0, 2020, 'acct_123', 5000);
+        const amountInOre = 20000; // 200 NOK
+
+        const res = await calculateFees('org1', amountInOre);
+
+        // Should reset to 5000 NOK debt (500000 øre)
+        const stripeFee = expectedStripeFee(amountInOre);
+        const maxAppFee = amountInOre - stripeFee;
+
+        expect(res.applicationFee).toBe(maxAppFee);
+        expect(res.breakdown.subscriptionBalanceBefore).toBe(500000); // 5000 * 100
     });
 });

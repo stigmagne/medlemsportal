@@ -10,9 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export function RevenueCalculator() {
     const [memberCount, setMemberCount] = useState<number>(30)
     const [annualFee, setAnnualFee] = useState<number>(200)
+    const [platformFeeYearly, setPlatformFeeYearly] = useState<number>(990)
 
     // Pricing Model Constants
-    const PLATFORM_FEE_YEARLY = 990
+    // const PLATFORM_FEE_YEARLY = 990
     const TX_FEE_FIXED = 5
     const TX_FEE_PERCENT = 0.025 // 2.5%
     const STRIPE_COST_FIXED = 2 // Estimated cost for us
@@ -33,7 +34,7 @@ export function RevenueCalculator() {
         const txAmount = annualFee
 
         // Check if we still need to cover platform fee
-        const neededForPlatform = PLATFORM_FEE_YEARLY - platformFeeCollected
+        const neededForPlatform = platformFeeYearly - platformFeeCollected
 
         if (neededForPlatform > 0) {
             // "No Cure No Pay" Phase:
@@ -100,7 +101,7 @@ export function RevenueCalculator() {
                         <h3 className="font-semibold mb-2">Prisingsmodell</h3>
                         <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
                             <li>Startkostnad: 0,-</li>
-                            <li>Plattformavgift: {PLATFORM_FEE_YEARLY},- (trekkes fra innbetalinger)</li>
+                            <li>Plattformavgift: {platformFeeYearly},- (trekkes fra innbetalinger)</li>
                             <li>Transaksjonsgebyr: {TX_FEE_FIXED} kr + {(TX_FEE_PERCENT * 100).toFixed(1)}%</li>
                         </ul>
                     </div>
