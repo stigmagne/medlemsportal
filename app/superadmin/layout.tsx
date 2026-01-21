@@ -55,7 +55,6 @@ export default async function SuperadminLayout({
     const userDisplayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Bruker'
 
     return (
-    return (
         <div className="min-h-screen bg-muted/40">
             {/* Header */}
             <header className="bg-background shadow-sm border-b border-border">
