@@ -19,23 +19,20 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
 async function checkColumns() {
-    console.log('Checking columns for "members" table...')
-
-    // We can just fetch one row and print the keys to see clear column names
-    const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .limit(1)
-
-    if (error) {
-        console.error('Error fetching members:', error)
-        return
+    console.log('Checking columns for "email_logs" ...')
+    const { data: emailData } = await supabase.from('email_logs').select('*').limit(1)
+    if (emailData && emailData.length > 0) {
+        console.log('email_logs columns:', Object.keys(emailData[0]))
+    } else {
+        console.log('No data in email_logs')
     }
 
-    if (data && data.length > 0) {
-        console.log('Columns found:', Object.keys(data[0]))
+    console.log('Checking columns for "membership_fees" ...')
+    const { data: feeData } = await supabase.from('membership_fees').select('*').limit(1)
+    if (feeData && feeData.length > 0) {
+        console.log('membership_fees columns:', Object.keys(feeData[0]))
     } else {
-        console.log('No members found, so cannot deduce columns from data. Trying to insert dummy to see error?')
+        console.log('No data in membership_fees')
     }
 }
 

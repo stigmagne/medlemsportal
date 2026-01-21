@@ -2,9 +2,13 @@
 import { createClient } from "@supabase/supabase-js"
 import fs from "fs"
 import path from "path"
+import dotenv from "dotenv"
 
-const SUPABASE_URL = "https://ejainxwtvwmlcrbanpeg.supabase.co"
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYWlueHd0dndtbGNyYmFucGVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODUzNDg1NCwiZXhwIjoyMDg0MTEwODU0fQ.6BqhlBgYtldQ2xrc96hcjgshkDUgilfI0ZlYtINJP4U"
+const envPath = path.resolve(process.cwd(), '.env.local')
+dotenv.config({ path: envPath })
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 // We use direct SQL execution if possible, or we just try to recreate policies?
 // Client library DOES NOT support running raw SQL strings for schema modification usually (unless RPC).

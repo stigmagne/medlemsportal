@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
-    LayoutDashboard, Users, Home, Calendar, MessageSquare,
+    LayoutDashboard, Users, Home, Calendar,
     CreditCard, Receipt, Users2, FileText, Settings, User,
-    Wallet, ChevronDown, ChevronRight, Folder, PieChart
+    Wallet, ChevronDown, ChevronRight, Folder, PieChart, MessageSquare
 } from 'lucide-react'
 
 interface DashboardShellProps {
@@ -122,6 +122,11 @@ export default function DashboardShell({
             href: `/org/${org.slug}/innstillinger/rapporter`,
             label: 'Rapportering',
             icon: <PieChart className="w-5 h-5" />
+        },
+        {
+            href: `/org/${org.slug}/kommunikasjon/sms`,
+            label: 'Kommunikasjon',
+            icon: <MessageSquare className="w-5 h-5" />
         }
     ]
 

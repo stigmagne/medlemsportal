@@ -1,14 +1,18 @@
 
 import { createClient } from "@supabase/supabase-js"
 import dotenv from "dotenv"
+import path from "path"
 
-// Manual load of .env.local because we are running with tsx outside of next dev context usually,
-// but let's just hardcode the keys we just read or assume process.env is populated if run correctly.
-// Actually, reading file is safer.
-// For this script, I'll paste the keys I just saw to be sure (since I can't rely on dotenv flow in this environment easily).
+const envPath = path.resolve(process.cwd(), '.env.local')
+dotenv.config({ path: envPath })
 
-const SUPABASE_URL = "https://ejainxwtvwmlcrbanpeg.supabase.co"
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYWlueHd0dndtbGNyYmFucGVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODUzNDg1NCwiZXhwIjoyMDg0MTEwODU0fQ.6BqhlBgYtldQ2xrc96hcjgshkDUgilfI0ZlYtINJP4U"
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("Missing environment variables")
+    process.exit(1)
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
