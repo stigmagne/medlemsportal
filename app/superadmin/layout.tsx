@@ -90,13 +90,13 @@ export default async function SuperadminLayout({
                 <aside className="w-64 min-h-screen bg-background border-r border-border">
                     <SuperadminSidebarNav />
                 </aside>
-            </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 p-8">
-                {children}
-            </main>
+
+                {/* Main Content */}
+                <main className="flex-1 p-8">
+                    {children}
+                </main>
+            </div>
         </div>
-        </div >
     )
 }
