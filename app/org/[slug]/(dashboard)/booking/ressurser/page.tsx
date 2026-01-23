@@ -45,8 +45,13 @@ export default async function ResourcesPage({
                                     </CardHeader>
                                     <CardContent className="text-sm">
                                         <div className="flex justify-between py-1">
-                                            <span className="text-muted-foreground">Pris per time:</span>
-                                            <span className="font-medium">{resource.hourly_rate},-</span>
+                                            <span className="text-muted-foreground">Pris:</span>
+                                            <span className="font-medium">
+                                                {resource.price},-
+                                                <span className="text-xs text-muted-foreground ml-1">
+                                                    ({resource.price_type === 'hourly' ? 'pr time' : resource.price_type === 'daily' ? 'pr dag' : 'fastpris'})
+                                                </span>
+                                            </span>
                                         </div>
                                         <div className="flex justify-between py-1">
                                             <span className="text-muted-foreground">Krever godkjenning:</span>

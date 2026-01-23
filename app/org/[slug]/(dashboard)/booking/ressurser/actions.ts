@@ -8,10 +8,14 @@ export type Resource = {
     name: string
     description: string | null
     requires_approval: boolean
-    hourly_rate: number
+    price: number
+    price_type: 'hourly' | 'daily' | 'fixed'
+    requires_time: boolean
+    payment_due_days: number
     is_active: boolean
 }
 
+// ... getResources ...
 export async function getResources(orgSlug: string) {
     const supabase = await createClient()
 
@@ -43,8 +47,11 @@ export async function createResource(prevState: any, formData: FormData) {
 
     const name = formData.get("name") as string
     const description = formData.get("description") as string
-    const hourlyRate = parseFloat(formData.get("hourly_rate") as string) || 0
+    const price = parseFloat(formData.get("price") as string) || 0
+    const priceType = formData.get("price_type") as string || 'hourly'
     const requiresApproval = formData.get("requires_approval") === "on"
+    const requiresTime = formData.get("requires_time") === "on"
+    const paymentDueDays = parseInt(formData.get("payment_due_days") as string) || 14
     const orgSlug = formData.get("org_slug") as string
 
     // Get org id
@@ -62,8 +69,11 @@ export async function createResource(prevState: any, formData: FormData) {
             org_id: org.id,
             name,
             description,
-            hourly_rate: hourlyRate,
+            price,
+            price_type: priceType,
             requires_approval: requiresApproval,
+            requires_time: requiresTime,
+            payment_due_days: paymentDueDays,
             is_active: true
         })
 

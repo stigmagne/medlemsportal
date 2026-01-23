@@ -65,19 +65,51 @@ export default function CreateResourceForm({ orgSlug }: { orgSlug: string }) {
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="hourly_rate">Pris per time (kr)</Label>
+                    <Label htmlFor="price">Pris (kr)</Label>
                     <Input
-                        id="hourly_rate"
-                        name="hourly_rate"
+                        id="price"
+                        name="price"
                         type="number"
                         defaultValue="0"
-                        className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                 </div>
 
-                <div className="flex items-center space-x-2 pt-8">
+                <div className="space-y-2">
+                    <Label htmlFor="price_type">Pristype</Label>
+                    <select
+                        id="price_type"
+                        name="price_type"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <option value="hourly">Per time</option>
+                        <option value="daily">Per dag</option>
+                        <option value="fixed">Fastpris (per booking)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="space-y-2">
+                    <Label htmlFor="payment_due_days">Betalingsfrist (dager før)</Label>
+                    <Input
+                        id="payment_due_days"
+                        name="payment_due_days"
+                        type="number"
+                        defaultValue="14"
+                        min="0"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-4 pt-4">
+                <div className="flex items-center space-x-2">
+                    <Switch id="requires_time" name="requires_time" defaultChecked />
+                    <Label htmlFor="requires_time">Krever tidsvalg (klokkeslett)</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
                     <Switch id="requires_approval" name="requires_approval" />
-                    <Label htmlFor="requires_approval">Krever godkjenning</Label>
+                    <Label htmlFor="requires_approval">Krever godkjenning av admin</Label>
                 </div>
             </div>
 
