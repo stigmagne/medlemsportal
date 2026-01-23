@@ -34,13 +34,42 @@ export async function createCase(prevState: any, formData: FormData) {
     const type = formData.get('type') as 'meeting' | 'email'
     const title = formData.get('title') as string
     const description = formData.get('description') as string
-    const attachmentUrl = formData.get('attachmentUrl') as string
+    const file = formData.get('file') as File
     const meetingId = formData.get('meetingId') as string
     const decision = formData.get('decision') as string
 
     // Auth & Org Check
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Ikke innlogget' }
+
+    // Upload File Logic
+    const attachments = []
+    if (file && file.size > 0 && file.name !== 'undefined') {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+        const filePath = `${slug}/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('case_attachments')
+            .upload(filePath, file)
+
+        if (uploadError) {
+            console.error('Upload error:', uploadError)
+            return { error: 'Kunne ikke laste opp vedlegg' }
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('case_attachments')
+            .getPublicUrl(filePath)
+
+        attachments.push({
+            type: 'file',
+            url: publicUrl,
+            name: file.name,
+            size: file.size,
+            mimeType: file.type
+        })
+    }
 
     const { data: org } = await supabase
         .from('organizations')
@@ -94,7 +123,7 @@ export async function createCase(prevState: any, formData: FormData) {
         // Status: If voting, set to 'open' (under behandling). If email without voting, 'decided'.
         status: votingEnabled ? 'open' : (type === 'email' ? 'decided' : 'draft'),
         created_by: user.id,
-        attachments: attachmentUrl ? [{ type: 'link', url: attachmentUrl, name: 'Vedlegg' }] : [],
+        attachments: attachments,
         voting_enabled: votingEnabled,
         voting_deadline: votingDeadline ? new Date(votingDeadline).toISOString() : null,
         required_votes: requiredVotes

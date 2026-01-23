@@ -78,9 +78,15 @@ export default function NewCaseForm({
                 </div>
 
                 <div>
-                    <label htmlFor="attachmentUrl" className="block text-sm font-medium text-gray-700">Vedlegg (URL)</label>
-                    <input type="url" name="attachmentUrl" id="attachmentUrl" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border" placeholder="https://..." />
-                    <p className="mt-1 text-xs text-gray-500">Lim inn lenke til dokument (Google Drive, Dropbox, etc) foreløpig.</p>
+                    <label htmlFor="file" className="block text-sm font-medium text-gray-700">Vedlegg (Valgfritt)</label>
+                    <input type="file" name="file" id="file" className="mt-1 block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100
+                    " />
+                    <p className="mt-1 text-xs text-gray-500">Last opp PDF, Word eller bilde.</p>
                 </div>
             </div>
 
