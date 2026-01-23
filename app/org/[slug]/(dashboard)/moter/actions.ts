@@ -60,6 +60,8 @@ export async function createMeeting(prevState: any, formData: FormData) {
     const time = formData.get('time') as string
     const type = formData.get('type') as string
     const location = formData.get('location') as string
+    // Handle case selection (can be multiple with same name)
+    const caseIds = formData.getAll('caseIds') as string[]
 
     // Combine date and time
     const meetingDateTime = new Date(`${date}T${time}`).toISOString()
@@ -96,8 +98,51 @@ export async function createMeeting(prevState: any, formData: FormData) {
         return { error: 'Kunne ikke opprette møte' }
     }
 
+    // Link selected cases to this meeting
+    if (caseIds.length > 0) {
+        const { error: linkError } = await supabase
+            .from('case_items')
+            .update({ connected_meeting_id: meeting.id })
+            .in('id', caseIds)
+
+        if (linkError) {
+            console.error('Error linking cases:', linkError)
+            // Non-critical, but should be noted. We redirect anyway.
+        }
+    }
+
     revalidatePath(`/org/${slug}/moter`)
     redirect(`/org/${slug}/moter/${meeting.id}`)
+}
+
+
+
+export async function getOpenCases(slug: string) {
+    const supabase = await createClient()
+
+    const { data: org } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', slug)
+        .single()
+
+    if (!org) return []
+
+    // Fetch cases that are open/draft AND not connected to a meeting yet
+    // origin = 'meeting' ensures we don't pick up pure email decisions unless they are converted?
+    // User wants to add "saker" to meeting. Even email cases might be brought up?
+    // Let's assume origin='meeting' OR origin is null?
+    // Safer to just check connected_meeting_id is null and status is not decided/dismissed
+    const { data } = await supabase
+        .from('case_items')
+        .select('id, title, formatted_id, created_at')
+        .eq('org_id', org.id)
+        .is('connected_meeting_id', null)
+        .neq('status', 'decided')
+        .neq('status', 'dismissed')
+        .order('created_at', { ascending: false })
+
+    return data || []
 }
 
 export async function inviteMembers(meetingId: string, slug: string, group: 'board' | 'all') {

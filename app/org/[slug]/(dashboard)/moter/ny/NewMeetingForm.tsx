@@ -4,6 +4,7 @@ import { createMeeting } from '../actions'
 import { useFormStatus } from 'react-dom'
 import { useActionState } from 'react'
 import Link from 'next/link'
+import CaseSelector from './CaseSelector'
 
 const initialState = { error: '' }
 
@@ -84,6 +85,12 @@ export default function NewMeetingForm({ slug }: { slug: string }) {
                         placeholder="Møterom A eller Oslo Rådhus"
                     />
                 </div>
+            </div>
+
+            {/* Case Selection */}
+            <div className="pt-6 border-t border-gray-100">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Saker til behandling</h3>
+                <CaseSelector slug={slug} />
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

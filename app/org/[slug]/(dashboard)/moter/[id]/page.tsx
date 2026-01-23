@@ -174,24 +174,55 @@ export default async function MeetingDetailsPage({
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900">Saksliste</h3>
-                        <p className="text-sm text-gray-500">Saker som skal behandles i dette møtet</p>
+                        <h3 className="text-lg font-bold text-gray-900">Saksliste / Agenda</h3>
+                        <p className="text-sm text-gray-500">Saker som skal behandles</p>
                     </div>
                     <Link
                         href={`/org/${slug}/saker/ny?meetingId=${id}`}
-                        className="text-sm bg-white border border-gray-300 px-3 py-1.5 rounded hover:bg-gray-50 font-medium text-gray-700"
+                        className="text-sm bg-white border border-gray-300 px-3 py-1.5 rounded hover:bg-gray-50 font-medium text-gray-700 h-fit"
                     >
                         + Legg til sak
                     </Link>
                 </div>
 
-                {!meeting.case_items || meeting.case_items.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500 italic">
-                        Ingen saker er lagt til enda.
+                <div className="divide-y divide-gray-100">
+                    {/* 1. Fast sak: Godkjenning av innkalling */}
+                    <div className="p-6 bg-gray-50/50">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-sm">
+                                01
+                            </span>
+                            <span className="text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded uppercase">
+                                Fast sak
+                            </span>
+                        </div>
+                        <h4 className="text-base font-semibold text-gray-900">
+                            Godkjenning av innkalling og saksliste
+                        </h4>
                     </div>
-                ) : (
-                    <div className="divide-y divide-gray-100">
-                        {meeting.case_items.map((c: any) => (
+
+                    {/* 2. Fast sak: Godkjenning av protokoll */}
+                    <div className="p-6 bg-gray-50/50">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-sm">
+                                02
+                            </span>
+                            <span className="text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded uppercase">
+                                Fast sak
+                            </span>
+                        </div>
+                        <h4 className="text-base font-semibold text-gray-900">
+                            Godkjenning av protokoll fra forrige møte (dd.mm.åå)
+                        </h4>
+                    </div>
+
+                    {/* 3...N: Dynamiske saker */}
+                    {!meeting.case_items || meeting.case_items.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500 italic border-y border-dashed border-gray-200 bg-yellow-50/30">
+                            Ingen øvrige saker meldt inn enda.
+                        </div>
+                    ) : (
+                        meeting.case_items.map((c: any, index: number) => (
                             <Link
                                 key={c.id}
                                 href={`/org/${slug}/saker/${c.id}`}
@@ -201,7 +232,7 @@ export default async function MeetingDetailsPage({
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-sm">
-                                                #{c.formatted_id}
+                                                #{c.formatted_id || (index + 3)}
                                             </span>
                                             <span className="text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded capitalize">
                                                 {c.status === 'draft' ? 'Åpen' : c.status}
@@ -217,9 +248,27 @@ export default async function MeetingDetailsPage({
                                     <svg className="w-5 h-5 text-gray-300 group-hover:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                 </div>
                             </Link>
-                        ))}
+                        ))
+                    )}
+
+                    {/* Siste sak: Eventuelt */}
+                    <div className="p-6 bg-gray-50/50">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-sm">
+                                {meeting.case_items ? meeting.case_items.length + 3 : 3}
+                            </span>
+                            <span className="text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded uppercase">
+                                Fast sak
+                            </span>
+                        </div>
+                        <h4 className="text-base font-semibold text-gray-900">
+                            Eventuelt
+                        </h4>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Saker som dukker opp under møtet.
+                        </p>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Current Person RSVP */}
