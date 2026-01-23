@@ -140,14 +140,26 @@ export async function sendCampaign(org_id: string, campaignId: string) {
         }
 
         // B. Personalize & Inject Tracking
-        let personalizedContent = campaign.content.replace('{{navn}}', member.first_name)
-        let htmlContent = `<div style="font-family: sans-serif;">${personalizedContent}</div>`
+        // 1. Sanitize HTML (Strip Tiptap Resize attributes from images)
+        // This regex rebuilds img tags to be email-friendly
+        let cleanContent = campaign.content.replace(/<img[^>]+src="([^">]+)"[^>]*>/g, (match: string, src: string) => {
+            // Extract width if present
+            const widthMatch = match.match(/width="?(\d+)"?/);
+            const width = widthMatch ? `width="${widthMatch[1]}"` : 'width="100%"';
+            const style = widthMatch ? `max-width: 100%; width: ${widthMatch[1]}px;` : 'max-width: 100%;';
+
+            return `<img src="${src}" ${width} style="${style} height: auto; border-radius: 4px; display: block; margin: 20px 0;" border="0" />`
+        });
+
+        // 2. Personalize (Global replacement)
+        let personalizedContent = cleanContent.replace(/{{navn}}/g, member.first_name || 'Medlem')
+
+        let htmlContent = `<div style="font-family: sans-serif; font-size: 16px; line-height: 1.6; color: #333;">${personalizedContent}</div>`
 
         // Inject Tracking
         htmlContent = injectTracking(htmlContent, recipient.unique_tracking_id, baseUrl)
 
         console.log('[DEBUG Tracking] Tracking ID:', recipient.unique_tracking_id)
-        console.log('[DEBUG Tracking] Original Content Length:', campaign.content.length)
         console.log('[DEBUG Tracking] Tracked Content Length:', htmlContent.length)
         console.log('[DEBUG Tracking] Has Pixel:', htmlContent.includes('<img src='))
         console.log('[DEBUG Tracking] Wraps Links:', htmlContent.includes('track/click'))
