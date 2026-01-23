@@ -72,7 +72,9 @@ export default function BookingForm({
                     <SelectContent>
                         {resources.map(res => (
                             <SelectItem key={res.id} value={res.id}>
-                                {res.name} ({res.hourly_rate > 0 ? `${res.hourly_rate} kr/t` : 'Gratis'})
+                                {res.name} ({res.price > 0
+                                    ? `${res.price} kr/${res.price_type === 'hourly' ? 't' : res.price_type === 'daily' ? 'dag' : 'totalt'}`
+                                    : 'Gratis'})
                             </SelectItem>
                         ))}
                     </SelectContent>
