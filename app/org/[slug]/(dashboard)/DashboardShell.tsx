@@ -102,9 +102,20 @@ export default function DashboardShell({
             ]
         },
         {
-            href: `/org/${org.slug}/booking`,
             label: 'Ressursbooking',
-            icon: <CalendarCheck className="w-5 h-5" />
+            icon: <CalendarCheck className="w-5 h-5" />,
+            children: [
+                {
+                    href: `/org/${org.slug}/booking/kalender`,
+                    label: 'Utleiekalender',
+                    icon: <CalendarCheck className="w-5 h-5" />
+                },
+                {
+                    href: `/org/${org.slug}/booking/ressurser`,
+                    label: 'Ressurser',
+                    icon: <Settings className="w-5 h-5" />
+                }
+            ]
         },
         {
             href: `/org/${org.slug}/arkiv`,
