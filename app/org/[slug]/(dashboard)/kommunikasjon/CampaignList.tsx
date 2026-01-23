@@ -63,7 +63,9 @@ export default function CampaignList({ campaigns, org_id }: { campaigns: Campaig
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                        {camp.subject}
+                                        <a href={`kommunikasjon/${camp.id}`} className="hover:text-blue-600 hover:underline">
+                                            {camp.subject}
+                                        </a>
                                     </h3>
                                     <p className="mt-1 text-sm text-gray-500">
                                         Opprettet: {new Date(camp.created_at).toLocaleDateString()}
