@@ -16,6 +16,7 @@ export type Campaign = {
         status?: string[]
         category?: string[]
     } | null
+    reply_to?: string
 }
 
 export type CampaignFilters = {
@@ -35,7 +36,7 @@ export async function getCampaigns(org_id: string): Promise<Campaign[]> {
     return (data || []) as Campaign[]
 }
 
-export async function createCampaign(org_id: string, subject: string, content: string, filters?: CampaignFilters) {
+export async function createCampaign(org_id: string, subject: string, content: string, filters?: CampaignFilters, replyTo?: string) {
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -47,7 +48,8 @@ export async function createCampaign(org_id: string, subject: string, content: s
         content,
         status: 'draft',
         created_by: user.id,
-        filters: filters || null
+        filters: filters || null,
+        reply_to: replyTo || null
     })
 
     if (error) return { error: error.message }
@@ -114,75 +116,91 @@ export async function sendCampaign(org_id: string, campaignId: string) {
     // 3. Update Status to Sending
     await supabase.from('email_campaigns').update({ status: 'sending', sent_at: new Date().toISOString() }).eq('id', campaignId)
 
-    // 4. Send Emails
+    // 4. Send Emails in Batches
     let successCount = 0
     const { injectTracking } = await import('@/lib/email/tracking-helpers')
+    const { sendEmailsBatch } = await import('@/lib/email/client')
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
-    for (const member of members) {
-        if (!member.email) continue
+    // Use custom Reply-To from campaign if set, otherwise fallback to provided replyTo arg or org contact
+    // Note: createCampaign saves it to DB, so we should trust campaign.reply_to first.
+    // Cast campaign to any if types mismatch, but we updated Campaign type above.
+    const finalReplyTo = (campaign as Campaign).reply_to || replyTo
 
-        // A. Insert Recipient to get Tracking ID
-        const { data: recipient, error: recipientError } = await supabase
-            .from('campaign_recipients')
-            .insert({
-                campaign_id: campaignId,
-                member_id: member.id,
-                email: member.email,
-                status: 'queued'
+    // Chunk size 50 (Safe max for Vercel timeout/Resend limit)
+    const chunkSize = 50
+    for (let i = 0; i < members.length; i += chunkSize) {
+        const chunk = members.slice(i, i + chunkSize)
+        const emailBatch: any[] = []
+        const recipientMap: Record<string, { recipientId: string, memberId: string }> = {}
+
+        for (const member of chunk) {
+            if (!member.email) continue
+
+            // A. Create Recipient Record
+            const { data: recipient, error: recipientError } = await supabase
+                .from('campaign_recipients')
+                .insert({
+                    campaign_id: campaignId,
+                    member_id: member.id,
+                    email: member.email,
+                    status: 'queued'
+                })
+                .select('id, unique_tracking_id')
+                .single()
+
+            if (recipientError || !recipient) {
+                console.error(`Failed to init recipient for ${member.email}`)
+                continue
+            }
+
+            // B. Personalize Content
+            let cleanContent = campaign.content.replace(/<img[^>]+src="([^">]+)"[^>]*>/g, (match: string, src: string) => {
+                const widthMatch = match.match(/width="?(\d+)"?/);
+                const width = widthMatch ? `width="${widthMatch[1]}"` : 'width="100%"';
+                const style = widthMatch ? `max-width: 100%; width: ${widthMatch[1]}px;` : 'max-width: 100%;';
+                return `<img src="${src}" ${width} style="${style} height: auto; border-radius: 4px; display: block; margin: 20px 0;" border="0" />`
+            });
+
+            let personalizedContent = cleanContent.replace(/{{navn}}/g, member.first_name || 'Medlem')
+            let htmlContent = `<div style="font-family: sans-serif; font-size: 16px; line-height: 1.6; color: #333;">${personalizedContent}</div>`
+            htmlContent = injectTracking(htmlContent, recipient.unique_tracking_id, baseUrl)
+
+            // Add to Batch
+            emailBatch.push({
+                to: member.email,
+                subject: campaign.subject,
+                html: htmlContent,
+                text: personalizedContent,
+                organizationId: org_id,
+                campaignId: campaign.id,
+                memberId: member.id,
+                from,
+                replyTo: finalReplyTo
             })
-            .select('id, unique_tracking_id')
-            .single()
 
-        if (recipientError || !recipient) {
-            console.error('Failed to create recipient record:', recipientError)
-            continue
+            recipientMap[member.email] = { recipientId: recipient.id, memberId: member.id }
         }
 
-        // B. Personalize & Inject Tracking
-        // 1. Sanitize HTML (Strip Tiptap Resize attributes from images)
-        // This regex rebuilds img tags to be email-friendly
-        let cleanContent = campaign.content.replace(/<img[^>]+src="([^">]+)"[^>]*>/g, (match: string, src: string) => {
-            // Extract width if present
-            const widthMatch = match.match(/width="?(\d+)"?/);
-            const width = widthMatch ? `width="${widthMatch[1]}"` : 'width="100%"';
-            const style = widthMatch ? `max-width: 100%; width: ${widthMatch[1]}px;` : 'max-width: 100%;';
+        // Send Batch
+        if (emailBatch.length > 0) {
+            const res = await sendEmailsBatch(emailBatch)
 
-            return `<img src="${src}" ${width} style="${style} height: auto; border-radius: 4px; display: block; margin: 20px 0;" border="0" />`
-        });
-
-        // 2. Personalize (Global replacement)
-        let personalizedContent = cleanContent.replace(/{{navn}}/g, member.first_name || 'Medlem')
-
-        let htmlContent = `<div style="font-family: sans-serif; font-size: 16px; line-height: 1.6; color: #333;">${personalizedContent}</div>`
-
-        // Inject Tracking
-        htmlContent = injectTracking(htmlContent, recipient.unique_tracking_id, baseUrl)
-
-        console.log('[DEBUG Tracking] Tracking ID:', recipient.unique_tracking_id)
-        console.log('[DEBUG Tracking] Tracked Content Length:', htmlContent.length)
-        console.log('[DEBUG Tracking] Has Pixel:', htmlContent.includes('<img src='))
-        console.log('[DEBUG Tracking] Wraps Links:', htmlContent.includes('track/click'))
-
-        // C. Send via Resend
-        const res = await sendEmail({
-            to: member.email,
-            subject: campaign.subject,
-            html: htmlContent,
-            text: personalizedContent,
-            organizationId: org_id,
-            campaignId: campaign.id,
-            memberId: member.id,
-            from,
-            replyTo
-        })
-
-        // D. Update Status
-        if (res.success) {
-            successCount++
-            await supabase.from('campaign_recipients').update({ status: 'sent' }).eq('id', recipient.id)
-        } else {
-            await supabase.from('campaign_recipients').update({ status: 'failed' }).eq('id', recipient.id)
+            if (res.success) {
+                successCount += (res.count || 0)
+                // Mark as sent
+                const recipientIds = Object.values(recipientMap).map(r => r.recipientId)
+                if (recipientIds.length > 0) {
+                    await supabase.from('campaign_recipients').update({ status: 'sent' }).in('id', recipientIds)
+                }
+            } else {
+                console.error('Batch failed', res.error)
+                // Mark as failed
+                const recipientIds = Object.values(recipientMap).map(r => r.recipientId)
+                if (recipientIds.length > 0) {
+                    await supabase.from('campaign_recipients').update({ status: 'failed' }).in('id', recipientIds)
+                }
+            }
         }
     }
 

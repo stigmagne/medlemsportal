@@ -6,6 +6,7 @@ import RichTextEditor from '@/components/editor/RichTextEditor'
 
 export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string, onSuccess: () => void }) {
     const [subject, setSubject] = useState('')
+    const [replyTo, setReplyTo] = useState('')
     const [content, setContent] = useState('')
     const [audienceType, setAudienceType] = useState<'all' | 'filtered'>('all')
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
@@ -24,12 +25,13 @@ export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string,
             if (customCategory.trim()) filters.category = [customCategory.trim()]
         }
 
-        const res = await createCampaign(org_id, subject, content, filters)
+        const res = await createCampaign(org_id, subject, content, filters, replyTo)
 
         if (res.error) {
             alert('Feil: ' + res.error)
         } else {
             setSubject('')
+            setReplyTo('')
             setContent('')
             setAudienceType('all')
             setSelectedStatuses([])
@@ -117,6 +119,19 @@ export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string,
                     value={subject} onChange={e => setSubject(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 p-2"
                 />
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Svar-til E-post (Valgfritt)
+                </label>
+                <input
+                    type="email"
+                    value={replyTo} onChange={e => setReplyTo(e.target.value)}
+                    placeholder="post@forening.no"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 p-2"
+                />
+                <p className="text-xs text-gray-500 mt-1">Hvis tom, brukes organisasjonens e-post.</p>
             </div>
 
             <div>

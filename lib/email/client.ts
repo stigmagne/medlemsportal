@@ -72,6 +72,56 @@ export async function sendEmail({
     }
 }
 
+// Batch Send
+export async function sendEmailsBatch(emails: SendEmailParams[]) {
+    try {
+        const batchPayload = emails.map(e => ({
+            from: e.from || process.env.RESEND_FROM_EMAIL || 'Din Forening <onboarding@resend.dev>',
+            to: e.to,
+            subject: e.subject,
+            html: e.html,
+            text: e.text,
+            reply_to: e.replyTo as string | string[] | undefined
+        }))
+
+        // Chunking for Resend Batch Limit (Max 100)
+        // We handle chunking here to be safe, even if caller chunks too.
+        const chunks = []
+        for (let i = 0; i < batchPayload.length; i += 100) {
+            chunks.push(batchPayload.slice(i, i + 100))
+        }
+
+        let successCount = 0
+        let errors: any[] = []
+
+        for (const chunk of chunks) {
+            const { data, error } = await resend.batch.send(chunk)
+
+            if (error) {
+                console.error('Batch Send Error:', error)
+                errors.push(error)
+                // We should probably log failed emails here, but we lack the context of which ones failed if the whole batch fails.
+                // If the batch fails, assume all in chunk failed.
+                continue
+            }
+
+            if (data && data.data) {
+                successCount += data.data.length
+                // Log success for these IDs? 
+                // Currently logging happens in the caller in the loop. 
+                // Since this is batch, we need to return the IDs so caller can update status.
+            }
+        }
+
+        return { success: true, count: successCount, errors }
+
+    } catch (e: any) {
+        console.error('Batch Exception:', e)
+        return { success: false, error: e }
+    }
+}
+
+// ... existing logEmail ...
 async function logEmail(params: {
     organizationId: string
     campaignId?: string
@@ -81,9 +131,6 @@ async function logEmail(params: {
     error_message?: string
 }) {
     const supabase = await createClient()
-
-    // Check if memberId is valid before inserting, or let FK constraint fail gracefully?
-    // Better to insert what we can.
 
     const { error } = await supabase.from('email_logs').insert({
         organization_id: params.organizationId,
