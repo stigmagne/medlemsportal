@@ -64,7 +64,7 @@ export default async function Home() {
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                         <Button asChild size="lg" className="h-12 px-8 text-base">
-                            <Link href={user ? dashboardUrl : "/register"}>
+                            <Link href={user ? dashboardUrl : "/signup"}>
                                 Kom i gang gratis <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
@@ -121,6 +121,14 @@ export default async function Home() {
 
                 {/* Footer */}
                 <footer className="bg-slate-50 dark:bg-slate-950 border-t py-12 px-6 text-center text-slate-500 dark:text-slate-400 text-sm">
+                    <div className="flex justify-center gap-6 mb-4">
+                        <Link href="/personvern" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+                            Personvernerklæring
+                        </Link>
+                        <Link href="/databehandleravtale" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+                            Databehandleravtale
+                        </Link>
+                    </div>
                     <p>© {new Date().getFullYear()} Din Forening. Bygget for norske ildsjeler.</p>
                 </footer>
             </main>

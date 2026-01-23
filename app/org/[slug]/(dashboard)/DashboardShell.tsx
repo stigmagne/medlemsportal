@@ -7,7 +7,8 @@ import { useTranslations } from 'next-intl'
 import {
     LayoutDashboard, Users, Home, Calendar,
     CreditCard, Receipt, Users2, FileText, Settings, User,
-    Wallet, ChevronDown, ChevronRight, Folder, PieChart, MessageSquare
+    Wallet, ChevronDown, ChevronRight, Folder, PieChart, MessageSquare,
+    CalendarCheck, Gavel, ClipboardList, BookCheck
 } from 'lucide-react'
 import { Breadcrumbs } from '@/components/breadcrumbs'
 
@@ -89,11 +90,21 @@ export default function DashboardShell({
                     icon: <CreditCard className="w-5 h-5" />
                 },
                 {
+                    href: `/org/${org.slug}/contingent`,
+                    label: 'Kontingent',
+                    icon: <Receipt className="w-5 h-5" />
+                },
+                {
                     href: `/org/${org.slug}/utlegg`,
                     label: 'Utlegg (Admin)',
                     icon: <Receipt className="w-5 h-5" />
                 }
             ]
+        },
+        {
+            href: `/org/${org.slug}/booking`,
+            label: 'Ressursbooking',
+            icon: <CalendarCheck className="w-5 h-5" />
         },
         {
             href: `/org/${org.slug}/arkiv`,
@@ -120,7 +131,24 @@ export default function DashboardShell({
         {
             href: `/org/${org.slug}/moter`,
             label: 'Møter & Saker',
-            icon: <Users2 className="w-5 h-5" />
+            icon: <Users2 className="w-5 h-5" />,
+            children: [
+                {
+                    href: `/org/${org.slug}/moter`,
+                    label: 'Møter',
+                    icon: <Users2 className="w-5 h-5" />
+                },
+                {
+                    href: `/org/${org.slug}/saker`,
+                    label: 'Saker',
+                    icon: <ClipboardList className="w-5 h-5" />
+                },
+                {
+                    href: `/org/${org.slug}/vedtak`,
+                    label: 'Vedtak',
+                    icon: <Gavel className="w-5 h-5" />
+                }
+            ]
         },
         {
             href: `/org/${org.slug}/innstillinger`,
