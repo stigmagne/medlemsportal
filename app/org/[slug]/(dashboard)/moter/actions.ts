@@ -102,7 +102,7 @@ export async function createMeeting(prevState: any, formData: FormData) {
     if (caseIds.length > 0) {
         const { error: linkError } = await supabase
             .from('case_items')
-            .update({ connected_meeting_id: meeting.id })
+            .update({ meeting_id: meeting.id })
             .in('id', caseIds)
 
         if (linkError) {
@@ -137,7 +137,7 @@ export async function getOpenCases(slug: string) {
         .from('case_items')
         .select('id, title, formatted_id, created_at')
         .eq('org_id', org.id)
-        .is('connected_meeting_id', null)
+        .is('meeting_id', null)
         .neq('status', 'decided')
         .neq('status', 'dismissed')
         .order('created_at', { ascending: false })

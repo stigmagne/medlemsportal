@@ -84,7 +84,7 @@ export async function createCase(prevState: any, formData: FormData) {
     // 2. Prepare Insert Data
     const insertData: any = {
         org_id: org.id,
-        connected_meeting_id: type === 'meeting' && meetingId ? meetingId : null,
+        meeting_id: type === 'meeting' && meetingId ? meetingId : null,
         title,
         description,
         case_year: year,
