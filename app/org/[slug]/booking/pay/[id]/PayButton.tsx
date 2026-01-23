@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { createStripeSession } from "./actions" // sibling file
+import { createStripeSession } from "../actions" // parent directory
 import { Loader2, CreditCard } from "lucide-react"
 import { useFormStatus } from "react-dom"
 import { useState } from "react"

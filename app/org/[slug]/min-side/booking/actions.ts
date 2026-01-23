@@ -78,11 +78,7 @@ export async function getUserBookings(orgSlug: string) {
     return bookings as Booking[]
 }
 
-import { sendEmail } from "@/lib/email/client"
-import { calculateBookingFee, PriceType } from "@/lib/payments/booking-fees"
-import { redirect } from "next/navigation"
-import { absoluteUrl } from "@/lib/utils"
-
+// ... types ...
 // ... types ...
 
 // ... getAvailableResources ...
