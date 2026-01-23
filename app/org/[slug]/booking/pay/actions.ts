@@ -1,9 +1,8 @@
-"use server"
-
 import { createClient } from "@/lib/supabase/server"
 import { stripe } from "@/lib/stripe/client"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { absoluteUrl } from "@/lib/utils"
 
 export async function createStripeSession(bookingId: string, orgSlug: string) {
     const supabase = await createClient()
@@ -26,8 +25,17 @@ export async function createStripeSession(bookingId: string, orgSlug: string) {
     // Allow payment if price > 0. If 0, maybe confirm? But this function implies payment.
     if (booking.total_price <= 0) return { error: "Booking is free" }
 
+    if (booking.total_price <= 0) return { error: "Booking is free" }
+
     // Create Stripe Session
-    const origin = (await headers()).get("origin") || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    // We use absoluteUrl just to be sure we get the full domain, 
+    // though for Stripe URLs we need full absolute paths anyway.
+    // absoluteUrl handles VERCEL_URL automatically.
+
+    // Construct URLs
+    const origin = absoluteUrl('') // gets base url
+    const successUrl = `${origin}/org/${orgSlug}/booking/pay/${bookingId}?success=true`
+    const cancelUrl = `${origin}/org/${orgSlug}/booking/pay/${bookingId}?canceled=true`
 
     try {
         const session = await stripe.checkout.sessions.create({
@@ -46,8 +54,8 @@ export async function createStripeSession(bookingId: string, orgSlug: string) {
                 },
             ],
             mode: "payment",
-            success_url: `${origin}/org/${orgSlug}/booking/pay/${bookingId}?success=true`,
-            cancel_url: `${origin}/org/${orgSlug}/booking/pay/${bookingId}?canceled=true`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             metadata: {
                 booking_id: bookingId,
                 org_slug: orgSlug,
