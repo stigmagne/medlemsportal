@@ -1,7 +1,8 @@
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe/client"
-import { createClient } from "@/lib/supabase/server"
+
+// import { createClient } from "@/lib/supabase/server" 
 import Stripe from "stripe"
 
 export async function POST(req: Request) {
@@ -31,7 +32,12 @@ export async function POST(req: Request) {
         if (session.metadata?.booking_id) {
             const bookingId = session.metadata.booking_id
 
-            const supabase = await createClient()
+            import { createAdminClient } from "@/lib/supabase/admin"
+            // import { createClient } from "@/lib/supabase/server" // Removed
+
+            // ...
+
+            const supabase = createAdminClient()
 
             const { error } = await supabase
                 .from("resource_bookings")
