@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createCampaign, CampaignFilters } from './actions'
+import RichTextEditor from '@/components/editor/RichTextEditor'
 
 export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string, onSuccess: () => void }) {
     const [subject, setSubject] = useState('')
@@ -10,6 +11,7 @@ export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string,
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
     const [customCategory, setCustomCategory] = useState('')
     const [loading, setLoading] = useState(false)
+    const [preview, setPreview] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -118,15 +120,30 @@ export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string,
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Innhold (HTML støttes delvis, bruk {'{{navn}}'} for navn)
-                </label>
-                <textarea
-                    rows={6} required
-                    value={content} onChange={e => setContent(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 p-2"
-                    placeholder="Hei {{navn}}, Velkommen til årsmøte..."
-                />
+                <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Innhold (Bruk {'{{navn}}'} for fletting)
+                    </label>
+                    <button
+                        type="button"
+                        onClick={() => setPreview(!preview)}
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    >
+                        {preview ? 'Rediger' : 'Forhåndsvisning'}
+                    </button>
+                </div>
+
+                {preview ? (
+                    <div className="border border-gray-200 rounded-md p-6 bg-white min-h-[300px] prose prose-sm max-w-none">
+                        <div dangerouslySetInnerHTML={{ __html: content }} />
+                    </div>
+                ) : (
+                    <RichTextEditor
+                        content={content}
+                        onChange={setContent}
+                        orgId={org_id}
+                    />
+                )}
             </div>
 
             <div className="flex justify-end gap-3">
