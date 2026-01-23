@@ -1,8 +1,8 @@
 'use client'
-
+import './styles.css'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
+import { ImageResize } from 'tiptap-extension-resize-image'
 import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 import { createClient } from '@/lib/supabase/client'
@@ -28,9 +28,9 @@ export default function RichTextEditor({
                     class: 'text-blue-600 underline',
                 },
             }),
-            Image.configure({
+            ImageResize.configure({
                 HTMLAttributes: {
-                    class: 'rounded-md max-w-full my-4',
+                    class: 'rounded-md my-4',
                 },
             }),
         ],
@@ -179,6 +179,18 @@ export default function RichTextEditor({
                         />
                     </label>
                 </div>
+
+                <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                <Button
+                    onClick={() => editor.chain().focus().insertContent('{{navn}}').run()}
+                    isActive={false}
+                    title="Sett inn navn-variabel"
+                >
+                    <span className="font-mono text-xs bg-gray-100 border border-gray-300 px-1 rounded text-gray-600 hover:text-blue-600">
+                        {'{{navn}}'}
+                    </span>
+                </Button>
 
                 <div className="flex-grow" />
 
