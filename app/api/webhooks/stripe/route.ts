@@ -1,8 +1,7 @@
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe/client"
-
-// import { createClient } from "@/lib/supabase/server" 
+import { createAdminClient } from "@/lib/supabase/admin"
 import Stripe from "stripe"
 
 export async function POST(req: Request) {
@@ -13,9 +12,6 @@ export async function POST(req: Request) {
 
     try {
         if (!process.env.STRIPE_WEBHOOK_SECRET) {
-            // If secret is missing, we can't verify signature.
-            // For dev/test without CLI, we might bypass? No, dangerous.
-            // We return 200 to avoid retries if we can't process it, or 500.
             console.error("Missing STRIPE_WEBHOOK_SECRET")
             return new NextResponse("Missing Webhook Secret", { status: 500 })
         }
@@ -31,11 +27,6 @@ export async function POST(req: Request) {
         // Ensure metadata exists
         if (session.metadata?.booking_id) {
             const bookingId = session.metadata.booking_id
-
-            import { createAdminClient } from "@/lib/supabase/admin"
-            // import { createClient } from "@/lib/supabase/server" // Removed
-
-            // ...
 
             const supabase = createAdminClient()
 
