@@ -15,8 +15,6 @@
 -- 1. CASE MANAGEMENT RLS FIX
 -- ====================
 
-\echo 'Applying Case Management RLS fixes...'
-
 -- Drop old permissive policies
 DROP POLICY IF EXISTS "Enable all access for authenticated users" ON case_items;
 DROP POLICY IF EXISTS "Enable all access for authenticated users" ON case_comments;
@@ -138,13 +136,11 @@ CREATE POLICY "Users can delete own votes" ON case_votes
   FOR DELETE
   USING (user_id = auth.uid());
 
-\echo 'Case Management RLS fixes applied.'
 
 -- ====================
 -- 2. MEETINGS RLS FIX
 -- ====================
 
-\echo 'Applying Meetings RLS fixes...'
 
 -- Meetings Policies
 DROP POLICY IF EXISTS "Users can view meetings for their org" ON meetings;
@@ -238,7 +234,7 @@ CREATE POLICY "Members can update own RSVP" ON meeting_attendees
     )
     AND member_id IN (
       SELECT id FROM members
-      WHERE user_id = auth.uid()
+      WHERE lower(email) = lower(auth.jwt() ->> 'email')
     )
   );
 
@@ -302,13 +298,11 @@ CREATE POLICY "Org admins can delete minutes" ON meeting_minutes
     )
   );
 
-\echo 'Meetings RLS fixes applied.'
 
 -- ====================
 -- 3. EVENTS RLS FIX
 -- ====================
 
-\echo 'Applying Events RLS fixes...'
 
 -- Events Policies
 DROP POLICY IF EXISTS "Public can view public events" ON events;
@@ -416,17 +410,153 @@ CREATE POLICY "Members can view own registrations" ON event_registrations
   USING (
     member_id IN (
       SELECT id FROM members
-      WHERE user_id = auth.uid()
+      WHERE lower(email) = lower(auth.jwt() ->> 'email')
     )
   );
 
-\echo 'Events RLS fixes applied (see events-rls-fix.sql for full policies).'
+DROP POLICY IF EXISTS "Anyone can register for public events" ON event_registrations;
+CREATE POLICY "Anyone can register for public events" ON event_registrations
+  FOR INSERT
+  WITH CHECK (
+    event_id IN (
+      SELECT id FROM events
+      WHERE open_for IN ('all', 'non_members_only')
+    )
+  );
+
+DROP POLICY IF EXISTS "Members can register for member events" ON event_registrations;
+CREATE POLICY "Members can register for member events" ON event_registrations
+  FOR INSERT
+  WITH CHECK (
+    event_id IN (
+      SELECT id FROM events
+      WHERE org_id IN (
+        SELECT organization_id
+        FROM user_org_access
+        WHERE user_id = auth.uid()
+      )
+    )
+    AND (
+      member_id IN (
+        SELECT id FROM members
+        WHERE lower(email) = lower(auth.jwt() ->> 'email')
+      )
+      OR member_id IS NULL -- Allow non-member registrations if event allows it
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can update own registrations" ON event_registrations;
+CREATE POLICY "Users can update own registrations" ON event_registrations
+  FOR UPDATE
+  USING (
+    member_id IN (
+      SELECT id FROM members
+      WHERE lower(email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+
+DROP POLICY IF EXISTS "Org admins can update registrations" ON event_registrations;
+CREATE POLICY "Org admins can update registrations" ON event_registrations
+  FOR UPDATE
+  USING (
+    event_id IN (
+      SELECT id FROM events
+      WHERE org_id IN (
+        SELECT organization_id
+        FROM user_org_access
+        WHERE user_id = auth.uid()
+        AND role IN ('org_admin', 'org_owner')
+      )
+    )
+  );
+
+DROP POLICY IF EXISTS "Org admins can delete registrations" ON event_registrations;
+CREATE POLICY "Org admins can delete registrations" ON event_registrations
+  FOR DELETE
+  USING (
+    event_id IN (
+      SELECT id FROM events
+      WHERE org_id IN (
+        SELECT organization_id
+        FROM user_org_access
+        WHERE user_id = auth.uid()
+        AND role IN ('org_admin', 'org_owner')
+      )
+    )
+  );
+
+-- ====================
+-- EVENT REGISTRATION PRODUCTS POLICIES
+-- ====================
+
+-- Users can view products for registrations they can see
+DROP POLICY IF EXISTS "Users can view registration products" ON event_registration_products;
+CREATE POLICY "Users can view registration products" ON event_registration_products
+  FOR SELECT
+  USING (
+    registration_id IN (
+      SELECT id FROM event_registrations
+      WHERE member_id IN (
+        SELECT id FROM members
+        WHERE lower(email) = lower(auth.jwt() ->> 'email')
+      )
+      OR event_id IN (
+        SELECT id FROM events
+        WHERE org_id IN (
+          SELECT organization_id
+          FROM user_org_access
+          WHERE user_id = auth.uid()
+          AND role IN ('org_admin', 'org_owner')
+        )
+      )
+    )
+  );
+
+-- Anyone can add products to their registration
+DROP POLICY IF EXISTS "Users can add products to registrations" ON event_registration_products;
+CREATE POLICY "Users can add products to registrations" ON event_registration_products
+  FOR INSERT
+  WITH CHECK (
+    registration_id IN (
+      SELECT id FROM event_registrations
+      WHERE member_id IN (
+        SELECT id FROM members
+        WHERE lower(email) = lower(auth.jwt() ->> 'email')
+      )
+      OR (
+        member_id IS NULL
+        AND event_id IN (
+          SELECT id FROM events
+          WHERE open_for IN ('all', 'non_members_only')
+        )
+      )
+    )
+  );
+
+-- Org admins can manage all registration products for their events
+DROP POLICY IF EXISTS "Org admins can manage registration products" ON event_registration_products;
+CREATE POLICY "Org admins can manage registration products" ON event_registration_products
+  FOR ALL
+  USING (
+    registration_id IN (
+      SELECT id FROM event_registrations
+      WHERE event_id IN (
+        SELECT id FROM events
+        WHERE org_id IN (
+          SELECT organization_id
+          FROM user_org_access
+          WHERE user_id = auth.uid()
+          AND role IN ('org_admin', 'org_owner')
+        )
+      )
+    )
+  );
+
 
 -- ====================
 -- 4. PAYMENTS RLS FIX
 -- ====================
 
-\echo 'Applying Payments RLS fixes...'
 
 DROP POLICY IF EXISTS "Org admins can view all payments" ON payment_transactions;
 CREATE POLICY "Org admins can view all payments" ON payment_transactions
@@ -446,7 +576,7 @@ CREATE POLICY "Members can view own payments" ON payment_transactions
   USING (
     member_id IN (
       SELECT id FROM members
-      WHERE user_id = auth.uid()
+      WHERE lower(email) = lower(auth.jwt() ->> 'email')
     )
   );
 
@@ -486,16 +616,16 @@ CREATE POLICY "Org admins can delete payments" ON payment_transactions
     )
   );
 
-\echo 'Payments RLS fixes applied.'
 
 -- ====================
 -- 5. AUDIT LOGGING
 -- ====================
 
-\echo 'Setting up Audit Logging system...'
 
 -- Note: For full audit logging setup including security_alerts table,
 -- see audit-logging.sql
+
+DROP TABLE IF EXISTS audit_log CASCADE;
 
 CREATE TABLE IF NOT EXISTS audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -606,18 +736,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-\echo 'Audit Logging system set up.'
 
 -- ====================
 -- COMPLETE
 -- ====================
-
-\echo ''
-\echo '✅ All security fixes applied successfully!'
-\echo ''
-\echo 'Next steps:'
-\echo '1. Test that the application still works'
-\echo '2. Verify RLS policies block cross-org access'
-\echo '3. Implement audit logging in application code'
-\echo '4. Read SECURITY_IMPROVEMENTS.md for full details'
-\echo ''
