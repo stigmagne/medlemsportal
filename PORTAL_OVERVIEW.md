@@ -1,5 +1,8 @@
 # Portal Oversikt & Funksjonalitet
 
+> **Sist oppdatert:** 24. januar 2026
+
+
 Dette dokumentet gir en komplett oversikt over funksjonaliteten i **Din Forening**-portalen, samt forslag til forbedringer og "tweaks" for å heve kvaliteten ytterligere.
 
 ## 🧱 Systemarkitektur
@@ -7,6 +10,7 @@ Dette dokumentet gir en komplett oversikt over funksjonaliteten i **Din Forening
 *   **Database & Autentisering:** Supabase (PostgreSQL, Auth)
 *   **Betaling:** Stripe Connect (Plattformmodell) + Faktura m/KID
 *   **Kommunikasjon:** Resend (E-post), Mock/SMS-tjeneste
+*   **Sikkerhet:** RLS (Row Level Security) + Audit Logging
 *   **Design:** Tailwind CSS / Shadcn UI
 
 ---
@@ -34,8 +38,8 @@ Dashbordet er hovedverktøyet for styret/administratorer. Tilgang styres via `or
 ### 4. 📨 Kommunikasjon (`/kommunikasjon`)
 *   **E-post (Kampanjer):**
     *   Sende e-post til alle medlemmer eller spesifikke grupper.
-    *   Støtte for rik tekst (HTML).
-    *   **NYTT:** Avsender vises som "Foreningens Navn" med svar-til adresse.
+    *   **Rik Tekst:** Full editor med støtte for fet/kursiv, lister og **bilder**.
+    *   **Svar-til:** Avsender vises som "Foreningens Navn" med korrekt svar-adresse.
 *   **SMS:**
     *   Sende SMS til mottakere (bruker mock-tjeneste foreløpig).
     *   Prisestimering før sending.
@@ -48,14 +52,24 @@ Dashbordet er hovedverktøyet for styret/administratorer. Tilgang styres via `or
 
 ### 6. ⚖️ Møter & Saker (`/moter`)
 *   **Møteinnkalling:** Opprette styremøter med tid og sted.
-*   **Saksliste:** Legge til saker til behandling.
+*   **Saksliste:** Integrert saksliste med "Godkjenning"-punkter og henting av saker fra arkiv.
 *   **Vedtak:** Protokollføre vedtak direkte i systemet.
-*   **Digital Behandling:** Mulighet for å sende saker på høring/votering (work-in-progress).
+*   **Case Management:** Full behandling av saker (Draft -> Ready -> Decided).
 
 ### 7. ⚙️ Innstillinger (`/innstillinger`)
 *   **Generelt:** Endre foreningens navn, logo (hvis impl.), kontingent-sats, og kontonummer.
 *   **Kontakt:** Sette opp kontakt-epost for utgående kommunikasjon.
 *   **Rapportering:** Enkle grafer over medlemsvekst og økonomi.
+
+### 8. 🛡️ Sikkerhet (`Sikkerhetslogg`)
+*   **Audit Logging:** Full sporbarhet på hvem som gjør hva (sletting, endringer).
+*   **RLS (Row Level Security):** Streng databasetilgang sikrer at data ikke lekker mellom organisasjoner.
+*   **Service Role:** Betalinger håndteres via sikker bakkanal for å garantere drift.
+
+### 9. 🦸 Superadmin (`/superadmin`)
+*   **Feilhåndtering:** Eget dashbord for å se feilrapporter fra brukere.
+*   **Løsning:** Mulighet til å markere feil som løst eller slette dem.
+*   **Systemoversikt:** Tilgang til globale innstillinger og feillogger.
 
 ---
 
@@ -81,6 +95,7 @@ Medlemsportalen er separert fra admin-delen for enklere brukeropplevelse. Tilgan
 
 ### 5. 📖 Booking (`/booking`)
 *   Reservere fellesressurser (f.eks. klubbhus, utstyr, tilhenger).
+*   **Betaling:** Støtte for betaling (Stripe) ved booking (Time/Dag/Fastpris).
 *   Kalenderoversikt over ledighet.
 
 ### 6. 📂 Arkiv (`/arkiv`)
@@ -93,26 +108,29 @@ Medlemsportalen er separert fra admin-delen for enklere brukeropplevelse. Tilgan
 Her er en liste over anbefalte justeringer for å gjøre løsningen mer robust og brukervennlig.
 
 ### UX / Brukeropplevelse
-1.  **Loading Skeletons:** I stedet for at siden er hvit eller "hopper" mens data lastes, bør vi legge inn "skjelett-visning" (grå bokser) på lister som Medlemmer og Betalinger.
+1.  **Loading Skeletons:** ✅ **UTFØRT:** Hele dashbordet bruker nå "skjelett-visning" med **morsomme tekster** 🐹 mens data lastes.
 2.  **Tomme Tilstander (Empty States):** Mange lister viser bare ingenting hvis de er tomme. Legg til en fin illustrasjon og en "Opprett ny"-knapp når listen er tom (f.eks. "Ingen møter ennå. Planlegg det første styremøtet nå!").
 3.  **Brødsmulesti (Breadcrumbs):** På dype sider (f.eks. inne på en spesifikk sak eller et dokument), bør det være tydelig vei tilbake (F.eks. `Saker > Sak #24 > Endre`).
 4.  **Aktiv Meny-indikator:** Sjekk at menyen alltid lyser opp korrekt også på undersider (f.eks. at "Kommunikasjon" lyser når man er inne på "SMS").
+5.  **404 & Feilsider:** ✅ **UTFØRT:** Morsomme 404-sider og en global feilhåndterer som lar brukere rapportere feil direkte til Superadmin.
 
 ### Funksjonelle Utvidelser
-5.  **Fakturering:**
+6.  **Fakturering:**
     *   Legge til mulighet for å generere PDF av faktura direkte fra Min Side.
     *   Automatisk purring ( sende e-post på nytt) ved forfall.
-6.  **Medlemskort:**
-    *   Digitalt medlemskort på Min Side (f.eks. med QR-kode) for adgangskontroll eller rabatter.
-7.  **Dashboard-widgets:**
-    *   Admin-dashbordet viser "Siste hendelser" (Logg) – f.eks. "Ola Nordmann betalte kontingent", "Ny sak opprettet". Dette gir styret puls på hva som skjer.
+7.  **Medlemskort:**
+    *   ✅ **UTFØRT:** Digitalt medlemskort på Min Side er implementert.
+8.  **Dashboard-widgets:**
+    *   ✅ **UTFØRT:** Admin-dashbordet viser nå "Siste hendelser" (Audit Log + Medlemmer + Betalinger). Dette gir styret full puls på hva som skjer.
 
 ### Teknisk Gjeld & Opprydding
-8.  **Konsistent `replyTo`:** Sjekke at alle e-post funksjoner (glemt passord, invitasjon, notifikasjoner) bruker den nye `contact_email` logikken, ikke bare Kampanjer.
+8.  **Konsistent `replyTo`:** ✅ **UTFØRT:** E-post bruker nå korrekt `contact_email` logikk.
 9.  **Feilhåndtering:**
-    *   Global "Error Boundary" som fanger opp krasj og viser "Noe gikk galt" i stedet for hvit skjerm, spesielt i komponenter som henter data.
+    *   ✅ **UTFØRT:** Global "Error Boundary" fanger krasj, viser humoristiske meldinger, og lar brukeren sende rapport til database.
+    *   Systemet lagrer stack trace, brukerinfo og kommentar.
 10. **Type-Sikkerhet:**
-    *   Gå gjennom alle `any` i koden (spesielt i tabeller og API-kall) og erstatte med strenge typer/interfaces.
+    *   ✅ **DELVIS UTFØRT:** Kritiske moduler som Dugnad og Møteprotokoller er typet opp strengt (fjernet 20+ `any`).
+    *   Fortsatt gjenstår en generell gjennomgang av `components` og eldre filer.
 
 ### Kode Struktur
-11. **Rydde i `(dashboard)` rot:** Sørge for at alle sider som *skal* ha admin-meny ligger i `(dashboard)` layoutgruppen, og at Min Side er helt isolert. (Dette er i stor grad gjort nå, men verdt en siste sjekk).
+11. **Rydde i `(dashboard)` rot:** ✅ **VERIFISERT:** Sjekket at Min Side er isolert fra Admin-dashbordet, og at `DashboardShell` (admin-shell) kun brukes der den skal. Routing-strukturen er godkjent.

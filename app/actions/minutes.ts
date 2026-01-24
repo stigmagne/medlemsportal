@@ -3,6 +3,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+export type MeetingDecision = {
+    id: string
+    text: string
+}
+
+export type TiptapContent = Record<string, any>
+
+
 export async function getMinutes(meetingId: string) {
     const supabase = await createClient()
 
@@ -19,7 +27,7 @@ export async function getMinutes(meetingId: string) {
     return data
 }
 
-export async function saveMinutes(meetingId: string, content: any, decisions: any[]) {
+export async function saveMinutes(meetingId: string, content: TiptapContent, decisions: MeetingDecision[]) {
     const supabase = await createClient()
 
     // Check if exists

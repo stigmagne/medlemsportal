@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { MeetingDecision } from '@/app/actions/minutes'
 
 export default async function DecisionsPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
@@ -29,7 +30,7 @@ export default async function DecisionsPage({ params }: { params: Promise<{ slug
 
     // Flatten decisions
     const allDecisions = minutes?.flatMap((m: any) => {
-        return (m.decisions || []).map((d: any) => ({
+        return (m.decisions || []).map((d: MeetingDecision) => ({
             ...d,
             meetingTitle: m.meeting.title,
             meetingDate: m.meeting.meeting_date,
@@ -49,7 +50,7 @@ export default async function DecisionsPage({ params }: { params: Promise<{ slug
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                        {allDecisions.map((decision: any, i: number) => (
+                        {allDecisions.map((decision: MeetingDecision & { meetingDate: string, meetingTitle: string, meetingId: string }, i: number) => (
                             <div key={i} className="p-6">
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="font-medium text-lg text-gray-900 dark:text-white">

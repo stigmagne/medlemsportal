@@ -68,8 +68,8 @@ export default async function EventDetailPage({
             <div>
                 <h2 className="text-xl font-semibold mb-4">Ledige vakter</h2>
                 <div className="grid gap-4">
-                    {event.roles.map((role: any) => {
-                        const isFull = role.filled_count >= role.capacity
+                    {event.roles.map((role: import('../actions').VolunteeringRole) => {
+                        const isFull = (role.filled_count || 0) >= role.capacity
                         const myAssignment = role.my_assignment
 
                         return (

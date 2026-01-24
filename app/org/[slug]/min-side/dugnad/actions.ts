@@ -3,6 +3,29 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
+export type VolunteeringAssignment = {
+    id: string
+    user_id: string
+    role_id: string
+    status: string
+    role?: {
+        event_id: string
+    }
+}
+
+export type VolunteeringRole = {
+    id: string
+    title: string
+    capacity: number
+    event_id: string
+    assignments?: { count: number }[]
+    filled_count?: number
+    my_assignment?: {
+        id: string
+        status: string
+    } | null
+}
+
 export type VolunteeringEvent = {
     id: string
     title: string
@@ -11,6 +34,7 @@ export type VolunteeringEvent = {
     end_time: string
     location: string | null
     needs_approval: boolean
+    roles?: VolunteeringRole[]
     filled_count?: number
     total_capacity?: number
     user_assignment_status?: string | null
@@ -56,7 +80,7 @@ export async function getPublishedVolunteeringEvents(orgSlug: string) {
     // but for now we iterate or could fetch user assignments separately.
 
     // Let's fetch user assignments for these events to see if "I am signed up"
-    let userAssignments: any[] = []
+    let userAssignments: VolunteeringAssignment[] = []
     if (user) {
         const eventIds = events.map(e => e.id)
         if (eventIds.length > 0) {
@@ -66,6 +90,9 @@ export async function getPublishedVolunteeringEvents(orgSlug: string) {
             const { data: ua } = await supabase
                 .from("volunteering_assignments")
                 .select(`
+                    id,
+                    user_id,
+                    role_id,
                     status,
                     role:volunteering_roles(
                         event_id
@@ -75,7 +102,9 @@ export async function getPublishedVolunteeringEvents(orgSlug: string) {
             // Ideally filter by event IDs but via join it's complex in one go without flattened ID list.
             // We'll filter in memory or assume list is small.
 
-            userAssignments = ua || []
+            // Supabase sometimes infers relationships as arrays in types, but runtime it's an object for N:1.
+            // We cast to any first to avoid conflict, then to our type.
+            userAssignments = (ua as any) || []
         }
     }
 
@@ -144,17 +173,19 @@ export async function getVolunteeringEventDetails(eventId: string) {
         .from("volunteering_assignments")
         .select(`
             id,
-            status,
-            role_id
+            user_id,
+            role_id,
+            status
         `)
         .eq("user_id", user.id)
 
     // We can't easily filter by event_id here without join, but we can filter in memory since we only care about this event's roles.
 
     // Process roles to include filled count and user status
-    const processedRoles = event.roles.map((role: any) => {
+    // Process roles to include filled count and user status
+    const processedRoles = event.roles.map((role: VolunteeringRole) => {
         const filled = role.assignments?.[0]?.count || 0
-        const myAssignment = myAssignments?.find((ua: any) => ua.role_id === role.id)
+        const myAssignment = myAssignments?.find((ua: VolunteeringAssignment) => ua.role_id === role.id)
 
         return {
             ...role,
@@ -168,7 +199,7 @@ export async function getVolunteeringEventDetails(eventId: string) {
 
     return {
         ...event,
-        roles: processedRoles.sort((a: any, b: any) => a.title.localeCompare(b.title))
+        roles: processedRoles.sort((a: VolunteeringRole, b: VolunteeringRole) => a.title.localeCompare(b.title))
     }
 }
 
