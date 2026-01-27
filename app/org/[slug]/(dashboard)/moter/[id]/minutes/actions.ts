@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sanitizeHTML } from '@/lib/validations/schemas'
 
 export type MinuteItem = {
     id: string
@@ -26,6 +27,21 @@ export async function saveMinutes(meetingId: string, content: any) {
 
     if (!user) return { error: 'Ikke innlogget' }
 
+    // SECURITY: Sanitize HTML content to prevent XSS attacks
+    const sanitizedNotes = content.notes ? sanitizeHTML(content.notes) : ''
+    const sanitizedDecisions = Array.isArray(content.decisions)
+        ? content.decisions.map((d: any) => ({
+            ...d,
+            text: sanitizeHTML(d.text || '')
+        }))
+        : []
+    const sanitizedActions = Array.isArray(content.actions)
+        ? content.actions.map((a: any) => ({
+            ...a,
+            text: sanitizeHTML(a.text || '')
+        }))
+        : []
+
     // Check if minutes exist, if not create
     const { data: existing } = await supabase
         .from('meeting_minutes')
@@ -37,9 +53,9 @@ export async function saveMinutes(meetingId: string, content: any) {
         const { error } = await supabase
             .from('meeting_minutes')
             .update({
-                content: content.notes, // simple text for now
-                decisions: content.decisions,
-                action_items: content.actions,
+                content: sanitizedNotes,
+                decisions: sanitizedDecisions,
+                action_items: sanitizedActions,
                 updated_at: new Date().toISOString()
             })
             .eq('meeting_id', meetingId)
@@ -50,9 +66,9 @@ export async function saveMinutes(meetingId: string, content: any) {
             .from('meeting_minutes')
             .insert({
                 meeting_id: meetingId,
-                content: content.notes,
-                decisions: content.decisions,
-                action_items: content.actions,
+                content: sanitizedNotes,
+                decisions: sanitizedDecisions,
+                action_items: sanitizedActions,
                 created_at: new Date().toISOString()
             })
 

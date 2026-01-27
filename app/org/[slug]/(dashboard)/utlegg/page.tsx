@@ -78,7 +78,7 @@ export default async function AdminExpensesPage({
                                         </TableCell>
                                         <TableCell>
                                             <div className="font-medium">{expense.member?.name}</div>
-                                            <div className="text-xs text-gray-500">{expense.bank_account}</div>
+                                            {/* Bank account encrypted in DB, NOT shown to approvers - only in PDF for kasserer */}
                                         </TableCell>
                                         <TableCell>
                                             <div className="max-w-[200px] truncate" title={expense.description}>

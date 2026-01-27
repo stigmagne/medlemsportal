@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
   -- Financials
   total_amount DECIMAL NOT NULL,
   payment_status TEXT DEFAULT 'pending', -- 'pending', 'paid', 'cancelled', 'refunded'
-  vipps_transaction_id TEXT,
+  stripe_payment_intent_id TEXT,
   
   -- Metadata
   registered_at TIMESTAMPTZ DEFAULT NOW(),

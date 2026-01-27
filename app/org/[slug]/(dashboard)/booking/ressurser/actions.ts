@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireOrgAccess } from "@/lib/auth/helpers"
 import { revalidatePath } from "next/cache"
 
 // ... types ...
@@ -17,16 +18,16 @@ export type Resource = {
     is_active: boolean
 }
 
-// ... getResources ...
+//... getResources ...
 export async function getResources(orgSlug: string) {
+    // SECURITY: Require at least member access to view resources
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
     const supabase = await createClient()
-    const { data: org } = await supabase.from("organizations").select("id").eq("slug", orgSlug).single()
-    if (!org) return []
 
     const { data: resources } = await supabase
         .from("resources")
         .select("*")
-        .eq("org_id", org.id)
+        .eq("org_id", orgId)  // Server-verified orgId (IDOR FIX)
         .order("category", { ascending: true }) // Group by category first
         .order("name", { ascending: true })
 
@@ -34,6 +35,9 @@ export async function getResources(orgSlug: string) {
 }
 
 export async function createResource(prevState: any, formData: FormData) {
+    // SECURITY: Require admin access to create resources
+    const orgSlug = formData.get("org_slug") as string
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     const name = formData.get("name") as string
@@ -44,13 +48,10 @@ export async function createResource(prevState: any, formData: FormData) {
     const requiresApproval = formData.get("requires_approval") === "on"
     const requiresTime = formData.get("requires_time") === "on"
     const paymentDueDays = parseInt(formData.get("payment_due_days") as string) || 14
-    const orgSlug = formData.get("org_slug") as string
-
-    const { data: org } = await supabase.from("organizations").select("id").eq("slug", orgSlug).single()
-    if (!org) return { error: "Fant ikke organisasjon" }
+    // orgSlug already extracted above for auth
 
     const { error } = await supabase.from("resources").insert({
-        org_id: org.id,
+        org_id: orgId,  // Server-verified orgId (IDOR FIX)
         name,
         description,
         price,
@@ -68,9 +69,12 @@ export async function createResource(prevState: any, formData: FormData) {
 }
 
 export async function updateResource(prevState: any, formData: FormData) {
+    // SECURITY: Require admin access to update resources
+    const orgSlug = formData.get("org_slug") as string
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
     const id = formData.get("id") as string
-    const orgSlug = formData.get("org_slug") as string
+    // orgSlug already extracted above for auth
 
     const updates = {
         name: formData.get("name") as string,
@@ -91,6 +95,8 @@ export async function updateResource(prevState: any, formData: FormData) {
 }
 
 export async function deleteResource(id: string, orgSlug: string) {
+    // SECURITY: Require admin access to delete resources
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
     const { error } = await supabase.from("resources").delete().eq("id", id)
     if (error) return { error: error.message }
@@ -99,6 +105,8 @@ export async function deleteResource(id: string, orgSlug: string) {
 }
 
 export async function toggleResourceStatus(resourceId: string, isActive: boolean, orgSlug: string) {
+    // SECURITY: Require admin access to toggle resource status
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
     const { error } = await supabase.from("resources").update({ is_active: isActive }).eq("id", resourceId)
     if (error) return { error: "Kunne ikke oppdatere status" }

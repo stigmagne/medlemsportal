@@ -1,9 +1,12 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
 
 export async function getCaseSettings(slug: string) {
+    // SECURITY: Require at least admin access to view case settings
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('organizations')
@@ -16,6 +19,8 @@ export async function getCaseSettings(slug: string) {
 }
 
 export async function updateCaseSettings(slug: string, formData: FormData) {
+    // SECURITY: Require admin access to update case settings
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
     const supabase = await createClient()
 
     // Auth check implies org access via RLS or middleware usually, 

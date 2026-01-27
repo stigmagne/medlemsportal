@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
 
 interface CreateFamilyInput {
@@ -10,7 +11,9 @@ interface CreateFamilyInput {
     payer_member_id: string
 }
 
-export async function createFamily(data: CreateFamilyInput) {
+export async function createFamily(orgSlug: string, data: Omit<CreateFamilyInput, 'org_id'>) {
+    // SECURITY: Require admin access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // Validation
@@ -42,7 +45,7 @@ export async function createFamily(data: CreateFamilyInput) {
     const { data: family, error: familyError } = await supabase
         .from('families')
         .insert({
-            org_id: data.org_id,
+            org_id: orgId,  // Server-verified orgId (IDOR FIX)
             family_name: data.family_name || 'Ny Familie',
             payer_member_id: data.payer_member_id
         })
@@ -65,18 +68,20 @@ export async function createFamily(data: CreateFamilyInput) {
         return { error: updateError.message }
     }
 
-    revalidatePath(`/org/${data.org_id}/dashboard/familier`) // Path might need adjustment depending on slug availability
+    revalidatePath(`/org/${orgSlug}/dashboard/familier`)
     return { success: true, family }
 }
 
 export async function updateFamily(
+    orgSlug: string,
     familyId: string,
     updates: {
         family_name?: string
         payer_member_id?: string
-    },
-    orgSlug: string // Needed for revalidation
+    }
 ) {
+    // SECURITY: Require admin access
+    await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     const { error } = await supabase
@@ -93,6 +98,8 @@ export async function updateFamily(
 }
 
 export async function deleteFamily(familyId: string, orgSlug: string) {
+    // SECURITY: Require admin access
+    await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // Remove family_id from all members
@@ -116,10 +123,12 @@ export async function deleteFamily(familyId: string, orgSlug: string) {
 }
 
 export async function addMemberToFamily(
+    orgSlug: string,
     memberId: string,
-    familyId: string,
-    orgSlug: string
+    familyId: string
 ) {
+    // SECURITY: Require admin access
+    await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // Check if member already in family
@@ -146,7 +155,9 @@ export async function addMemberToFamily(
     return { success: true }
 }
 
-export async function removeMemberFromFamily(memberId: string, orgSlug: string) {
+export async function removeMemberFromFamily(orgSlug: string, memberId: string) {
+    // SECURITY: Require admin access
+    await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // Check if this is the payer
@@ -202,16 +213,9 @@ export async function removeMemberFromFamily(memberId: string, orgSlug: string) 
 }
 
 export async function getOrgFamilies(orgSlug: string) {
+    // SECURITY: Require at least member access to view families
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
     const supabase = await createClient()
-
-    // Get org id from slug
-    const { data: org } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', orgSlug)
-        .single()
-
-    if (!org) return []
 
     const { data, error } = await supabase
         .from('families')
@@ -220,7 +224,7 @@ export async function getOrgFamilies(orgSlug: string) {
       payer:members!families_payer_member_id_fkey(id, first_name, last_name, email),
       family_members:members!members_family_id_fkey(id, first_name, last_name, email, membership_status)
     `)
-        .eq('org_id', org.id)
+        .eq('org_id', orgId)  // Server-verified orgId (IDOR FIX)
         .order('created_at', { ascending: false })
 
     if (error) {

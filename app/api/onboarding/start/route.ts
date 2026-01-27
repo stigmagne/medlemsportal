@@ -67,12 +67,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Create onboarding link
-        const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        // SECURITY: Don't trust Origin header - use env variable (Origin Injection FIX)
+        const trustedOrigin = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
         const accountLink = await stripe.accountLinks.create({
             account: accountId,
-            refresh_url: `${origin}/org/${organizationId}/innstillinger/betaling?refresh=true`, // Redirect back to settings page on refresh
-            return_url: `${origin}/org/${organizationId}/innstillinger/betaling?success=true`, // Redirect back on success
+            refresh_url: `${trustedOrigin}/org/${organizationId}/innstillinger/betaling?refresh=true`, // Redirect back to settings page on refresh
+            return_url: `${trustedOrigin}/org/${organizationId}/innstillinger/betaling?success=true`, // Redirect back on success
             type: 'account_onboarding',
         })
 

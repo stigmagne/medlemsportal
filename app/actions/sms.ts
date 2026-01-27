@@ -1,14 +1,19 @@
 'use server'
 
-import { createClient } from "@supabase/supabase-js"
-import { cookies } from "next/headers"
+import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 
-export async function sendSms(orgId: string, message: string, groupId: string) {
+/**
+ * SECURITY FIX: This function previously used SERVICE_ROLE_KEY without authentication,
+ * allowing anyone to send SMS at organization expense. Now properly secured.
+ */
+export async function sendSms(orgSlug: string, message: string, groupId: string) {
+    // CRITICAL: Verify user is authenticated and has admin access to this org
+    const { user, orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
+    const supabase = await createClient()  // Use regular auth client, NOT service role
+
     try {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
 
         // 1. Fetch Potential Recipients
         // Start building query
@@ -52,7 +57,7 @@ export async function sendSms(orgId: string, message: string, groupId: string) {
                 status: 'sent',
                 total_cost: totalCost,
                 provider: 'mock',
-                created_by: (await cookies()).get('sb-user-id')?.value
+                created_by: user.id  // Authenticated user from requireOrgAccess
             })
 
         if (logError) {

@@ -146,7 +146,7 @@ export default function EventRegistrationForm({
                 <h2 className="text-2xl font-bold text-green-700 mb-4">✅ Du er påmeldt!</h2>
                 <p className="text-green-800 mb-6">Vi har sendt en bekreftelse til din e-post.</p>
                 <p className="text-sm text-gray-500">
-                    (Dette er en demo. I produksjon ville du nå blitt sendt til Vipps.)
+                    (Dette er en demo. I produksjon ville du nå blitt sendt til Stripe.)
                 </p>
                 <div className="mt-8 p-4 bg-white rounded border border-green-200 inline-block">
                     <p className="font-bold">Totalt å betale: {calculateTotal()} kr</p>
@@ -330,7 +330,7 @@ export default function EventRegistrationForm({
                     disabled={loading || (!memberId && (!formData.name || !formData.email))}
                     className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transform transition hover:scale-[1.02] disabled:opacity-50 disabled:scale-100 shadow-xl shadow-blue-200"
                 >
-                    {loading ? 'Behandler...' : 'Gå til betaling (Vipps)'}
+                    {loading ? 'Behandler...' : 'Gå til betaling (Stripe)'}
                 </button>
             </div>
         </div>

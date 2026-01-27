@@ -1,14 +1,13 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess, requireRole } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
 
-export async function updateOrganizationSettings(orgId: string, data: { membershipFee?: number, accountNumber?: string, contactEmail?: string }) {
+export async function updateOrganizationSettings(orgSlug: string, data: { membershipFee?: number, accountNumber?: string, contactEmail?: string }) {
+    // SECURITY: Require admin access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
-
-    // Auth check
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Unauthorized' }
 
     // Prepare updates object
     const updates: any = {}
@@ -19,18 +18,27 @@ export async function updateOrganizationSettings(orgId: string, data: { membersh
     const { error } = await supabase
         .from('organizations')
         .update(updates)
-        .eq('id', orgId)
+        .eq('id', orgId)  // Server-verified orgId (IDOR FIX)
 
     if (error) {
         console.error('Error updating settings:', error)
         return { error: 'Kunne ikke oppdatere innstillinger' }
     }
 
-    revalidatePath(`/org/${orgId}/innstillinger`)
+    // Utled slug fra orgId for revalidation
+    const { data: org } = await supabase.from('organizations').select('slug').eq('id', orgId).single()
+    if (org?.slug) {
+        revalidatePath(`/org/${org.slug}/innstillinger`)
+    }
     return { success: true }
 }
 
-export async function runNewYearRenewal(orgId: string, year: number) {
+export async function runNewYearRenewal(orgSlug: string, year: number) {
+    // SECURITY: CRITICAL - Require superadmin for this system-wide financial operation
+    await requireRole('superadmin')
+
+    // Utled orgId fra slug
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // 1. Get Organization Details (Fee)
@@ -208,7 +216,9 @@ export async function runNewYearRenewal(orgId: string, year: number) {
     return { success: true, count: transactions.length }
 }
 
-export async function getOrgSettings(orgId: string) {
+export async function getOrgSettings(orgSlug: string) {
+    // SECURITY: Require at least member access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
     const supabase = await createClient()
     const { data } = await supabase
         .from('organizations')

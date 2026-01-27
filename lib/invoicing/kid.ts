@@ -68,6 +68,10 @@ export function generateNumericReference(): string {
     // Format: YYMMDD + 5 random digits. Length: 6 + 5 = 11 digits.
     const date = new Date();
     const dateStr = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
-    const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+
+    // SECURITY: Use crypto.randomInt() instead of Math.random() for cryptographic randomness
+    const { randomInt } = require('crypto');
+    const random = randomInt(0, 100000).toString().padStart(5, '0');
+
     return `${dateStr}${random}`;
 }

@@ -81,7 +81,7 @@ export default function PrivacyPage() {
                                     <h3 className="text-lg font-semibold mb-3 text-gray-800">B. Betalingsinformasjon</h3>
                                     <ul className="list-disc pl-5 space-y-2 text-gray-700 text-sm">
                                         <li>Kontingentbetalinger (beløp, dato, status)</li>
-                                        <li>Vipps-transaksjoner (ikke kortinformasjon - dette håndteres av Vipps)</li>
+                                        <li>Stripe-transaksjoner (ikke kortinformasjon - dette håndteres av Stripe)</li>
                                     </ul>
                                 </div>
 
@@ -161,7 +161,7 @@ export default function PrivacyPage() {
                         <p className="mb-4 text-gray-700">Vi deler IKKE personopplysninger med tredjeparter, bortsett fra:</p>
                         <ul className="space-y-3 mb-6">
                             <li className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
-                                <span className="bg-orange-100 text-orange-600 p-1.5 rounded text-xs font-bold">Vipps</span>
+                                <span className="bg-purple-100 text-purple-600 p-1.5 rounded text-xs font-bold">Stripe</span>
                                 <span className="text-gray-700">For betalingshåndtering (kun betalingsdata)</span>
                             </li>
                             <li className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">

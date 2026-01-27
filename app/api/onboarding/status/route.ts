@@ -11,12 +11,22 @@ export async function GET(request: NextRequest) {
         }
 
         const supabase = await createClient()
-        // Verify access? Or is this public status? Let's protect it.
+        // SECURITY: Verify user has access to this organization (IDOR FIX)
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-            // Allow checking status if just returning boolean flags? 
-            // Better safe: require auth.
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Check if user has access to this organization
+        const { data: access } = await supabase
+            .from('user_org_access')
+            .select('role')
+            .eq('organization_id', organizationId)
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+        if (!access) {
+            return NextResponse.json({ error: 'Forsøk på handling uten tilgang' }, { status: 403 })
         }
 
         const { data: org } = await supabase

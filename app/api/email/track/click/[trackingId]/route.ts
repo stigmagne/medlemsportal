@@ -15,6 +15,32 @@ export async function GET(
         return new Response('Missing url parameter', { status: 400 })
     }
 
+    const ALLOWED_REDIRECT_DOMAINS = process.env.NEXT_PUBLIC_ALLOWED_REDIRECT_DOMAINS
+        ? process.env.NEXT_PUBLIC_ALLOWED_REDIRECT_DOMAINS.split(',').map(d => d.trim())
+        : [];
+
+    const isValidRedirectUrl = (url: string): boolean => {
+        // Allow relative paths (internal to the application)
+        if (url.startsWith('/')) {
+            return true;
+        }
+
+        try {
+            const urlObj = new URL(url);
+            // Check if the hostname is in the allowed list
+            return ALLOWED_REDIRECT_DOMAINS.includes(urlObj.hostname);
+        } catch (e) {
+            // URL is malformed
+            return false;
+        }
+    };
+
+    if (!isValidRedirectUrl(targetUrl)) {
+        console.warn('Attempted redirect to an unallowed domain:', targetUrl);
+        // Redirect to a safe default or return an error
+        return new Response('Invalid redirect URL', { status: 400 });
+    }
+
     try {
         if (!trackingId) {
             return NextResponse.redirect(targetUrl)

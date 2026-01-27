@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 import { sendEmail } from '@/lib/email/client'
 import { revalidatePath } from 'next/cache'
 
@@ -24,26 +25,30 @@ export type CampaignFilters = {
     category?: string[]
 }
 
-export async function getCampaigns(org_id: string): Promise<Campaign[]> {
+export async function getCampaigns(orgSlug: string): Promise<Campaign[]> {
+    // SECURITY: Require at least member access to view campaigns
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
     const supabase = await createClient()
 
     const { data } = await supabase
         .from('email_campaigns')
         .select('*')
-        .eq('organization_id', org_id)
+        .eq('organization_id', orgId)  // Server-verified orgId (IDOR FIX)
         .order('created_at', { ascending: false })
 
     return (data || []) as Campaign[]
 }
 
-export async function createCampaign(org_id: string, subject: string, content: string, filters?: CampaignFilters, replyTo?: string) {
+export async function createCampaign(orgSlug: string, subject: string, content: string, filters?: CampaignFilters, replyTo?: string) {
+    // SECURITY: Require admin access to create campaigns
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
     const { error } = await supabase.from('email_campaigns').insert({
-        organization_id: org_id,
+        organization_id: orgId,  // Server-verified orgId (IDOR FIX)
         subject,
         content,
         status: 'draft',
@@ -54,11 +59,13 @@ export async function createCampaign(org_id: string, subject: string, content: s
 
     if (error) return { error: error.message }
 
-    revalidatePath(`/org/${org_id}/kommunikasjon`)
+    revalidatePath(`/org/${orgSlug}/kommunikasjon`)
     return { success: true }
 }
 
-export async function sendCampaign(org_id: string, campaignId: string) {
+export async function sendCampaign(orgSlug: string, campaignId: string) {
+    // SECURITY: Require admin access to send campaigns
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // 1. Fetch Campaign & Org Details (contact_email, name)
@@ -66,13 +73,13 @@ export async function sendCampaign(org_id: string, campaignId: string) {
         .from('email_campaigns')
         .select('*')
         .eq('id', campaignId)
-        .eq('organization_id', org_id)
+        .eq('organization_id', orgId)  // Server-verified orgId (IDOR FIX)
         .single()
 
     const { data: org } = await supabase
         .from('organizations')
         .select('name, contact_email')
-        .eq('id', org_id)
+        .eq('id', orgId)  // Server-verified orgId (IDOR FIX)
         .single()
 
     if (!campaign) return { error: 'Campaign not found' }
@@ -92,7 +99,7 @@ export async function sendCampaign(org_id: string, campaignId: string) {
     let query = supabase
         .from('members')
         .select('id, email, first_name')
-        .eq('organization_id', org_id)
+        .eq('organization_id', orgId)  // Server-verified orgId (IDOR FIX)
         .not('email', 'is', null)
 
     // Apply filters if they exist
@@ -172,7 +179,7 @@ export async function sendCampaign(org_id: string, campaignId: string) {
                 subject: campaign.subject,
                 html: htmlContent,
                 text: personalizedContent,
-                organizationId: org_id,
+                organizationId: orgId,  // Server-verified orgId (IDOR FIX)
                 campaignId: campaign.id,
                 memberId: member.id,
                 from,
@@ -210,6 +217,6 @@ export async function sendCampaign(org_id: string, campaignId: string) {
         recipient_count: successCount
     }).eq('id', campaignId)
 
-    revalidatePath(`/org/${org_id}/kommunikasjon`)
+    revalidatePath(`/org/${orgSlug}/kommunikasjon`)
     return { success: true, count: successCount }
 }

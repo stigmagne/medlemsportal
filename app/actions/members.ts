@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
 
 export type CreateMemberInput = {
@@ -27,14 +28,17 @@ export type CreateMemberInput = {
 }
 
 export async function createMember(data: CreateMemberInput) {
+    // SECURITY: Require admin access to create members
+    const { orgId } = await requireOrgAccess(data.slug, 'org_admin')
+
     const supabase = await createClient()
     const year = new Date().getFullYear()
 
-    // 1. Insert Member
+    // 1. Insert Member - IDOR FIX: Use server-verified orgId
     const { data: member, error: insertError } = await supabase
         .from('members')
         .insert({
-            organization_id: data.organization_id,
+            organization_id: orgId,  // Server-verified, not from client
             member_number: data.member_number,
             first_name: data.first_name,
             last_name: data.last_name,
@@ -67,7 +71,7 @@ export async function createMember(data: CreateMemberInput) {
     const { count, error: countError } = await supabase
         .from('payment_transactions')
         .select('*', { count: 'exact', head: true })
-        .eq('org_id', data.organization_id)
+        .eq('org_id', orgId)  // Server-verified orgId
         .eq('type', 'membership_fee')
         .ilike('description', `%${year}%`)
 
@@ -98,7 +102,7 @@ export async function createMember(data: CreateMemberInput) {
             const { error: invoiceError } = await supabase
                 .from('payment_transactions')
                 .insert({
-                    org_id: data.organization_id,
+                    org_id: orgId,  // Server-verified orgId
                     member_id: member.id,
                     amount: memberType.fee,
                     type: 'membership_fee',

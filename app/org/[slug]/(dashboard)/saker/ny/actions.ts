@@ -3,6 +3,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { validateCaseAttachment } from '@/lib/validations/file-upload'
+import { requireOrgAccess } from '@/lib/auth/helpers'
+
 
 export async function getUpcomingMeetings(slug: string) {
     const supabase = await createClient()
@@ -38,9 +41,16 @@ export async function createCase(prevState: any, formData: FormData) {
     const meetingId = formData.get('meetingId') as string
     const decision = formData.get('decision') as string
 
-    // Auth & Org Check
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Ikke innlogget' }
+    // Auth & Org Check - Use server-verified orgId
+    const { user, orgId } = await requireOrgAccess(slug, 'org_admin')
+
+    // Validate file BEFORE upload
+    if (file && file.size > 0 && file.name !== 'undefined') {
+        const validation = validateCaseAttachment(file)
+        if (!validation.valid) {
+            return { error: validation.error || 'Invalid file' }
+        }
+    }
 
     // Upload File Logic
     const attachments = []
@@ -71,20 +81,14 @@ export async function createCase(prevState: any, formData: FormData) {
         })
     }
 
-    const { data: org } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', slug)
-        .single()
-
-    if (!org) return { error: 'Fant ikke organisasjon' }
+    // Use server-verified orgId from requireOrgAccess
 
     const votingEnabled = formData.get('votingEnabled') === 'on'
     const votingDeadline = formData.get('votingDeadline') as string
 
     // 1. Get Next Case Number & Org ID (Atomic)
     const { data: numData, error: numError } = await supabase
-        .rpc('get_next_case_number', { p_org_id: org.id })
+        .rpc('get_next_case_number', { p_org_id: orgId })
 
     if (numError || !numData) {
         console.error('Numbering error:', numError)
@@ -100,7 +104,7 @@ export async function createCase(prevState: any, formData: FormData) {
         const { count, error: countError } = await supabase
             .from('members')
             .select('*', { count: 'exact', head: true })
-            .eq('organization_id', org.id)
+            .eq('organization_id', orgId)
             .in('role', ['admin', 'owner', 'board']) // Consistent with invites
 
         if (!countError && count) {
@@ -112,7 +116,7 @@ export async function createCase(prevState: any, formData: FormData) {
 
     // 2. Prepare Insert Data
     const insertData: any = {
-        org_id: org.id,
+        org_id: orgId,
         meeting_id: type === 'meeting' && meetingId ? meetingId : null,
         title,
         description,

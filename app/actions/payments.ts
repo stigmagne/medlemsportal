@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess, requireRole } from '@/lib/auth/helpers'
+import { recordPaymentSchema, validateSchema } from '@/lib/validations/schemas'
 import { revalidatePath } from 'next/cache'
 
 interface PayoutCalculation {
@@ -12,9 +14,11 @@ interface PayoutCalculation {
 }
 
 export async function calculatePayoutForPayment(
-    orgId: string,
+    orgSlug: string,
     paymentAmount: number
 ): Promise<PayoutCalculation> {
+    // SECURITY: Require admin access to calculate payouts
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // Hent organisasjonens nåværende abonnementsbalanse
@@ -68,8 +72,8 @@ export async function calculatePayoutForPayment(
         // This implies that once balance is 0, any NEW payment gets full fee.
         // What about the split payment (the crossover one)?
         // User example: "Betaling 10: 100 kr -> 90 kr går til abonnement, 10 kr til forening".
-        // It seems the "10 kr" part has 0 fee in the example. 
-        // BUT usually fees apply to transactions. 
+        // It seems the "10 kr" part has 0 fee in the example.
+        // BUT usually fees apply to transactions.
         // If I strictly follow the example: "10 kr til forening". No fee mentioned.
         // I will implementation strict interpretation: No fee on the crossover surplus.
 
@@ -115,24 +119,46 @@ export async function calculatePayoutForPayment(
     }
 }
 
-export async function recordPayment(data: {
-    orgId: string;
+interface RecordPaymentInput {
+    orgSlug: string;
     memberId: string;
     amount: number;
     vippsTransactionId?: string;
     paymentType: 'membership' | 'event' | 'other';
-}) {
+    description?: string;
+    paymentMethod?: string;
+}
+
+export async function recordPayment(data: RecordPaymentInput) {
+    // SECURITY: Require org admin access
+    const { orgId } = await requireOrgAccess(data.orgSlug, 'org_admin')
+
+    // SECURITY: Validate payment data (prevent negative amounts, validate description)
+    const validation = validateSchema(recordPaymentSchema, {
+        memberId: data.memberId,
+        amount: data.amount,
+        description: data.description || 'Betaling',
+        paymentMethod: data.paymentMethod || 'card',
+        date: new Date().toISOString()
+    })
+
+    if (!validation.success) {
+        return {
+            error: `Ugyldig betalingsdata: ${validation.errors.map(e => e.message).join(', ')}`
+        }
+    }
+
     const supabase = await createClient()
 
-    // Beregn utbetaling
-    const payout = await calculatePayoutForPayment(data.orgId, data.amount)
+    // Beregn utbetaling (now pass orgSlug instead of orgId)
+    const payout = await calculatePayoutForPayment(data.orgSlug, validation.validatedData.amount)
 
     // Lagre betalingsdetaljer
     // Using 'payment_transactions' table as established
     const { data: payment, error } = await supabase
         .from('payment_transactions')
         .insert({
-            organization_id: data.orgId, // Mapped from org_id
+            organization_id: orgId,  // Server-verified orgId (IDOR FIX), not from client
             // member_id might not exist in payment_transactions based on previous sql searches, checking schema...
             // 'add-fee-columns.sql' did not show member_id.
             // Usually it's linked to a member. I'll assume member_id exists or I need to check.
@@ -175,7 +201,7 @@ export async function recordPayment(data: {
         console.log('Subscription fully paid email trigger')
     }
 
-    revalidatePath(`/org/${data.orgId}/dashboard`)
+    revalidatePath(`/org/${data.orgSlug}/dashboard`)
 
     return payment
 }

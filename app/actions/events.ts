@@ -1,10 +1,11 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess, requireAuth } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
 
 interface CreateEventInput {
-    org_id: string;
+    orgSlug: string;  // Changed from org_id to orgSlug
     title: string;
     description?: string;
     event_date: string;
@@ -27,6 +28,8 @@ interface CreateEventInput {
 }
 
 export async function createEvent(data: CreateEventInput) {
+    // SECURITY: Require admin access to create events
+    const { orgId } = await requireOrgAccess(data.orgSlug, 'org_admin')
     const supabase = await createClient()
 
     // Validation
@@ -44,7 +47,7 @@ export async function createEvent(data: CreateEventInput) {
     const { data: event, error: eventError } = await supabase
         .from('events')
         .insert({
-            org_id: data.org_id,
+            org_id: orgId,  // Server-verified orgId (IDOR FIX)
             title: data.title,
             description: data.description,
             event_date: data.event_date,
@@ -89,11 +92,13 @@ export async function createEvent(data: CreateEventInput) {
         }
     }
 
-    revalidatePath(`/org/${data.org_id}/dashboard/arrangementer`)
+    revalidatePath(`/org/${data.orgSlug}/dashboard/arrangementer`)
     return { success: true, event }
 }
 
-export async function getEvents(orgId: string, filter: 'upcoming' | 'past' | 'all' = 'upcoming') {
+export async function getEvents(orgSlug: string, filter: 'upcoming' | 'past' | 'all' = 'upcoming') {
+    // SECURITY: Require at least member access to view events
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
     const supabase = await createClient()
 
     let query = supabase
@@ -164,6 +169,8 @@ interface CreateRegistrationInput {
 }
 
 export async function registerForEvent(data: CreateRegistrationInput) {
+    // SECURITY: Require authentication (though this can be public, we need a user)
+    const { user } = await requireAuth()  // Get authenticated user
     const supabase = await createClient()
 
     // 1. Fetch event and check capacity

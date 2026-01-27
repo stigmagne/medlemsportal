@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const metadata = paymentIntent.metadata
 
     console.log('Payment succeeded:', {
@@ -75,7 +75,7 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 }
 
 async function handleAccountUpdate(account: Stripe.Account) {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const organizationId = account.metadata?.organization_id
 
     if (organizationId) {

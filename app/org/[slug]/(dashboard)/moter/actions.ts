@@ -16,21 +16,16 @@ export type Meeting = {
 }
 
 export async function getMeetings(slug: string) {
+    // SECURITY: Require at least member access to view meetings
+    const { requireOrgAccess } = await import('@/lib/auth/helpers')
+    const { orgId } = await requireOrgAccess(slug, 'org_member')
+
     const supabase = await createClient()
-
-    // Get org id from slug
-    const { data: org } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', slug)
-        .single()
-
-    if (!org) throw new Error('Fant ikke organisasjon')
 
     const { data, error } = await supabase
         .from('meetings')
         .select('*')
-        .eq('org_id', org.id)
+        .eq('org_id', orgId) // Server-verified orgId
         .order('meeting_date', { ascending: true })
 
     if (error) {

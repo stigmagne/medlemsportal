@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { encryptBankAccount } from '@/lib/crypto/bank-encryption'
 
 interface SubmitExpenseInput {
     org_id: string;
@@ -15,7 +16,7 @@ interface SubmitExpenseInput {
     toll_parking_cost?: number;
     ticket_cost?: number;
     receipt_url?: string; // Path/URL from storage
-    bank_account: string;
+    bank_account: string; // Encrypted before storage for GDPR compliance
 }
 
 export async function submitExpenses(items: SubmitExpenseInput[]) {
@@ -40,14 +41,17 @@ export async function submitExpenses(items: SubmitExpenseInput[]) {
 
     const KM_RATE = 3.50
 
-    // Prepare rows
-    const rows = items.map(data => {
+    // Prepare rows with bank account encryption
+    const rows = await Promise.all(items.map(async data => {
         let total = 0
         if (data.transport_type === 'car' && data.distance_km) {
             total += data.distance_km * KM_RATE
         }
         if (data.toll_parking_cost) total += data.toll_parking_cost
         if (data.ticket_cost) total += data.ticket_cost
+
+        // Encrypt bank account before storage (GDPR compliance)
+        const encryptedBankAccount = await encryptBankAccount(data.bank_account)
 
         return {
             org_id: data.org_id,
@@ -63,10 +67,10 @@ export async function submitExpenses(items: SubmitExpenseInput[]) {
             ticket_cost: data.ticket_cost,
             total_amount: total,
             receipt_url: data.receipt_url,
-            bank_account: data.bank_account,
+            bank_account: encryptedBankAccount,
             status: 'submitted'
         }
-    })
+    }))
 
     const { error } = await supabase
         .from('travel_expenses')
@@ -108,7 +112,11 @@ export async function getMemberExpenses(orgId: string) {
 
 // Admin Actions
 
-export async function getExpensesForAdmin(orgId: string, status: 'submitted' | 'approved' | 'rejected' | 'paid' | 'all' = 'all') {
+export async function getExpensesForAdmin(orgSlug: string, status: 'submitted' | 'approved' | 'rejected' | 'paid' | 'all' = 'all') {
+    // SECURITY: Require admin access before viewing all expenses
+    const { requireOrgAccess } = await import('@/lib/auth/helpers')
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
     const supabase = await createClient()
 
     let query = supabase
@@ -118,7 +126,7 @@ export async function getExpensesForAdmin(orgId: string, status: 'submitted' | '
             member:members(first_name, last_name, email),
             event:events(title)
         `)
-        .eq('org_id', orgId)
+        .eq('org_id', orgId) // Server-verified orgId
         .order('created_at', { ascending: false })
 
     if (status !== 'all') {
