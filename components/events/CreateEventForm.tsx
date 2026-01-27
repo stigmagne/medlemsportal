@@ -56,7 +56,7 @@ export default function CreateEventForm({ slug, orgId }: { slug: string, orgId: 
         const isoDate = new Date(`${formData.event_date}T${formData.time}`).toISOString()
 
         const res = await createEvent({
-            org_id: orgId,
+            orgSlug: slug,
             title: formData.title,
             description: formData.description,
             event_date: isoDate,
