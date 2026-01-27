@@ -40,7 +40,7 @@ export default async function FamiliesPage({ params }: { params: Promise<{ slug:
                     </p>
                 </div>
                 <CreateFamilyModal
-                    orgId={org.id}
+                    slug={slug}
                     availableMembers={availableMembers || []}
                 />
             </div>

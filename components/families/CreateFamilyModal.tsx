@@ -21,7 +21,7 @@ function Modal({ isOpen, onClose, title, children }: any) {
     )
 }
 
-export default function CreateFamilyModal({ orgId, availableMembers, onSuccess }: any) {
+export default function CreateFamilyModal({ slug, availableMembers, onSuccess }: any) {
     const [isOpen, setIsOpen] = useState(false)
     const [step, setStep] = useState(1)
     const [selectedMembers, setSelectedMembers] = useState<string[]>([])
@@ -52,8 +52,7 @@ export default function CreateFamilyModal({ orgId, availableMembers, onSuccess }
     }
 
     const handleSubmit = async () => {
-        const res = await createFamily({
-            org_id: orgId,
+        const res = await createFamily(slug, {
             member_ids: selectedMembers,
             payer_member_id: payerId,
             family_name: familyName
