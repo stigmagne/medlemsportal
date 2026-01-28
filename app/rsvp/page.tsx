@@ -27,7 +27,7 @@ export default function RsvpPage() {
     const handleRsvp = async (selectedStatus: 'yes' | 'no' | 'maybe') => {
         try {
             setStatus('pending') // show loading if manual click
-            const res = await fetch('/rsvp', {
+            const res = await fetch('/api/rsvp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, status: selectedStatus })
