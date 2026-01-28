@@ -35,7 +35,9 @@ export default async function Home() {
 
             if (orgAccess?.organizations) {
                 // User has org access → redirect to their primary organization
-                dashboardUrl = `/org/${orgAccess.organizations.slug}`
+                // Supabase returns organizations as an object when using join syntax
+                const org = orgAccess.organizations as unknown as { slug: string }
+                dashboardUrl = `/org/${org.slug}`
             } else {
                 // No org access → fallback to personal dashboard
                 dashboardUrl = '/min-side'
