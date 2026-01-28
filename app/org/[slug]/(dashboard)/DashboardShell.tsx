@@ -49,6 +49,11 @@ export default function DashboardShell({
 
     const isActive = (path?: string) => {
         if (!path) return false
+        // For exact match pages (like dashboard root, innstillinger root), only match exact
+        if (path.endsWith('/dashboard') || path.endsWith('/innstillinger')) {
+            return pathname === path
+        }
+        // For other pages, match path and its children
         return pathname === path || pathname?.startsWith(`${path}/`)
     }
 

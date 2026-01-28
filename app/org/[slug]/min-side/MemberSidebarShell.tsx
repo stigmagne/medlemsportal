@@ -44,6 +44,11 @@ export default function MemberSidebarShell({
 
     const isActive = (path?: string) => {
         if (!path) return false
+        // For exact match pages (like overview), only match the exact path
+        if (path.endsWith('/min-side') || path.endsWith('/dashboard')) {
+            return pathname === path
+        }
+        // For other pages, match path and its children
         return pathname === path || pathname?.startsWith(`${path}/`)
     }
 

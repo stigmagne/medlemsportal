@@ -17,8 +17,8 @@ export default async function SettingsPage({
     const { data: org } = await supabase.from('organizations').select('id, name').eq('slug', slug).single()
     if (!org) return <div>Fant ikke organisasjon</div>
 
-    const settings = await getOrgSettings(org.id)
-    const memberTypes = await getMemberTypes(org.id)
+    const settings = await getOrgSettings(slug)
+    const memberTypes = await getMemberTypes(slug)
 
     return (
         <div className="space-y-6 max-w-4xl">

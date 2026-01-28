@@ -150,10 +150,6 @@ export default async function MinSidePage({
                                 <span className="font-semibold text-gray-900 dark:text-white">{member.member_number}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600 dark:text-gray-300">{t('membership.category')}</span>
-                                <span className="font-medium text-gray-900 dark:text-white capitalize">{member.membership_category || t('membership.unknown')}</span>
-                            </div>
-                            <div className="flex justify-between">
                                 <span className="text-gray-600 dark:text-gray-300">{t('membership.status')}</span>
                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${member.membership_status === 'active'
                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
