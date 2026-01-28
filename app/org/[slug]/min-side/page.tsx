@@ -109,7 +109,7 @@ export default async function MinSidePage({
                     {outstandingFees.length > 0 ? (
                         <div className="space-y-4">
                             {outstandingFees.map(fee => (
-                                <div key={fee.id} className="border border-orange-200 bg-orange-50 dark:bg-orange-900/10 dark:border-orange-900 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div key={fee.id} className="border border-purple-200 bg-purple-50 dark:bg-purple-900/10 dark:border-purple-900 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                                     <div>
                                         <h3 className="font-semibold text-gray-900 dark:text-white">{fee.name}</h3>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
