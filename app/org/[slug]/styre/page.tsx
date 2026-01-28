@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { BoardMemberCard, PublicBoardMember } from "@/components/board/BoardMemberCard"
 import { notFound } from "next/navigation"
 
-export default async function PublicBoardPage({ params }: { params: { slug: string } }) {
+export default async function PublicBoardPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
     const supabase = await createClient()
 

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft } from "lucide-react"
 
-export default async function PublicBoardHistoryPage({ params }: { params: { slug: string } }) {
+export default async function PublicBoardHistoryPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
     const supabase = await createClient()
 
