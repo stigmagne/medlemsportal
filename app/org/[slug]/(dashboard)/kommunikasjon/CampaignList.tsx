@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Campaign, sendCampaign } from './actions'
 
-export default function CampaignList({ campaigns, org_id }: { campaigns: Campaign[], org_id: string }) {
+export default function CampaignList({ campaigns, orgSlug }: { campaigns: Campaign[], orgSlug: string }) {
     const [sendingId, setSendingId] = useState<string | null>(null)
     const [confirmData, setConfirmData] = useState<{ id: string, subject: string } | null>(null)
 
@@ -18,7 +18,7 @@ export default function CampaignList({ campaigns, org_id }: { campaigns: Campaig
 
         setSendingId(id)
         try {
-            const res = await sendCampaign(org_id, id)
+            const res = await sendCampaign(orgSlug, id)
             if (res.error) alert('Feil: ' + res.error)
             else alert(`Sendt til ${res.count} medlemmer!`)
         } catch (e) {

@@ -44,6 +44,20 @@ export async function importMembers(org_id: string, members: MappedMember[]): Pr
         return { success: false, count: 0, errors: ['Ingen tilgang til organisasjonen'] }
     }
 
+    // Require admin role for import
+    if (access.role !== 'org_admin' && access.role !== 'org_owner') {
+        return { success: false, count: 0, errors: ['Kun administratorer kan importere medlemmer'] }
+    }
+
+    // Get org slug for revalidatePath
+    const { data: org } = await supabase
+        .from('organizations')
+        .select('slug')
+        .eq('id', org_id)
+        .single()
+
+    const orgSlug = org?.slug
+
     // Process in batches of 50
     const BATCH_SIZE = 50
 
@@ -112,8 +126,9 @@ export async function importMembers(org_id: string, members: MappedMember[]): Pr
         }
     }
 
-    revalidatePath(`/org/${org_id}/medlemmer`) // We don't have slug here easily available, but path revalidation might fail if path is strict.
-    // Ideally we revalidate the tag.
+    if (orgSlug) {
+        revalidatePath(`/org/${orgSlug}/medlemmer`)
+    }
 
     return {
         success: successCount > 0,

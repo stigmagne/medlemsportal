@@ -12,10 +12,10 @@ import { Campaign } from './actions'
 
 export default function CommunicationPageContent({
     campaigns,
-    org_id
+    orgSlug
 }: {
     campaigns: Campaign[]
-    org_id: string
+    orgSlug: string
 }) {
     const [isCreating, setIsCreating] = useState(false)
 
@@ -41,9 +41,9 @@ export default function CommunicationPageContent({
             </div>
 
             {isCreating ? (
-                <NewCampaignForm org_id={org_id} onSuccess={() => setIsCreating(false)} />
+                <NewCampaignForm orgSlug={orgSlug} onSuccess={() => setIsCreating(false)} />
             ) : (
-                <CampaignList campaigns={campaigns} org_id={org_id} />
+                <CampaignList campaigns={campaigns} orgSlug={orgSlug} />
             )}
         </div>
     )
