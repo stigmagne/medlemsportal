@@ -3,8 +3,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 
-export async function getCase(id: string) {
+export async function getCase(id: string, orgSlug: string) {
+    // SECURITY: Verify org access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
+
     const supabase = await createClient()
     const { data } = await supabase
         .from('case_items')
@@ -17,13 +21,27 @@ export async function getCase(id: string) {
             )
         `)
         .eq('id', id)
+        .eq('org_id', orgId) // SECURITY: Verify case belongs to this org
         .single()
 
     return data
 }
 
-export async function getCaseVotes(caseId: string) {
+export async function getCaseVotes(caseId: string, orgSlug: string) {
+    // SECURITY: Verify org access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
+
     const supabase = await createClient()
+
+    // SECURITY: Verify case belongs to org
+    const { data: caseItem } = await supabase
+        .from('case_items')
+        .select('org_id')
+        .eq('id', caseId)
+        .single()
+
+    if (!caseItem || caseItem.org_id !== orgId) return []
+
     const { data } = await supabase
         .from('case_votes')
         .select('*')
@@ -31,8 +49,21 @@ export async function getCaseVotes(caseId: string) {
     return data || []
 }
 
-export async function getCaseComments(caseId: string) {
+export async function getCaseComments(caseId: string, orgSlug: string) {
+    // SECURITY: Verify org access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
+
     const supabase = await createClient()
+
+    // SECURITY: Verify case belongs to org
+    const { data: caseItem } = await supabase
+        .from('case_items')
+        .select('org_id')
+        .eq('id', caseId)
+        .single()
+
+    if (!caseItem || caseItem.org_id !== orgId) return []
+
     const { data } = await supabase
         .from('case_comments')
         .select(`
@@ -44,13 +75,16 @@ export async function getCaseComments(caseId: string) {
     return data || []
 }
 
-export async function castVote(caseId: string, vote: 'support' | 'oppose' | 'abstain') {
+export async function castVote(caseId: string, vote: 'support' | 'oppose' | 'abstain', orgSlug: string) {
+    // SECURITY: Verify org access - must be member minimum
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Ikke innlogget' }
 
     // Find member ID for this org/user
-    // 1. Get case -> org_id
+    // 1. Get case -> org_id and verify it matches
     const { data: caseItem } = await supabase
         .from('case_items')
         .select('org_id, required_votes, status')
@@ -58,6 +92,7 @@ export async function castVote(caseId: string, vote: 'support' | 'oppose' | 'abs
         .single()
 
     if (!caseItem) return { error: 'Sak ikke funnet' }
+    if (caseItem.org_id !== orgId) return { error: 'Ingen tilgang til denne saken' }
     if (caseItem.status !== 'open') return { error: 'Avstemning er ikke åpen' }
 
     // 2. Get member
@@ -91,13 +126,16 @@ export async function castVote(caseId: string, vote: 'support' | 'oppose' | 'abs
     return { success: true }
 }
 
-export async function addComment(caseId: string, content: string) {
+export async function addComment(caseId: string, content: string, orgSlug: string) {
+    // SECURITY: Verify org access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Ikke innlogget' }
 
     // Find member ID for this org/user
-    // 1. Get case -> org_id
+    // 1. Get case -> org_id and verify it matches
     const { data: caseItem } = await supabase
         .from('case_items')
         .select('org_id')
@@ -105,6 +143,7 @@ export async function addComment(caseId: string, content: string) {
         .single()
 
     if (!caseItem) return { error: 'Sak ikke funnet' }
+    if (caseItem.org_id !== orgId) return { error: 'Ingen tilgang til denne saken' }
 
     // 2. Get member
     const { data: member } = await supabase

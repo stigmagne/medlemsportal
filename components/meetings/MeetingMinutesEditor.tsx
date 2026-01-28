@@ -14,7 +14,7 @@ export default function MeetingMinutesEditor({ meetingId, slug, initialData }: {
 
     const handleSave = async () => {
         setLoading(true)
-        const res = await saveMinutes(meetingId, content, decisions)
+        const res = await saveMinutes(meetingId, content, decisions, slug)
         setLoading(false)
         if (res?.error) alert('Feil ved lagring')
     }

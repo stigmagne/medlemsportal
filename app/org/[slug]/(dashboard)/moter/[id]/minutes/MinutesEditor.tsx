@@ -48,7 +48,7 @@ export default function MinutesEditor({
 
     const handleSave = () => {
         startTransition(async () => {
-            const res = await saveMinutes(meetingId, { notes, decisions, actions })
+            const res = await saveMinutes(meetingId, { notes, decisions, actions }, slug)
             if (res?.error) alert(res.error)
             else {
                 // optional toast
@@ -60,8 +60,8 @@ export default function MinutesEditor({
     const handlePublish = () => {
         if (!confirm('Er du sikker? Dette vil gjøre referatet synlig for alle deltakere.')) return
         startTransition(async () => {
-            await saveMinutes(meetingId, { notes, decisions, actions })
-            await publishMinutes(meetingId)
+            await saveMinutes(meetingId, { notes, decisions, actions }, slug)
+            await publishMinutes(meetingId, slug)
             router.refresh()
             router.push(`/org/${slug}/moter/${meetingId}`)
         })

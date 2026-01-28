@@ -25,7 +25,7 @@ export default async function ContingentPage({
     const org_id = organization.id
 
     // Fetch active fees
-    const fees = await getMembershipFees(org_id)
+    const fees = await getMembershipFees(slug)
     const activeFees = fees.filter(f => f.is_active)
 
     // Fetch members count (for now, we will add full list later)

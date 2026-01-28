@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireOrgAccess, requireAuth } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
+import { validateFutureDate, validateAmount, validateDateRange, sanitizeError } from '@/lib/validation'
 
 interface CreateEventInput {
     orgSlug: string;  // Changed from org_id to orgSlug
@@ -28,72 +29,104 @@ interface CreateEventInput {
 }
 
 export async function createEvent(data: CreateEventInput) {
-    // SECURITY: Require admin access to create events
-    const { orgId } = await requireOrgAccess(data.orgSlug, 'org_admin')
-    const supabase = await createClient()
+    try {
+        // SECURITY: Require admin access to create events
+        const { orgId } = await requireOrgAccess(data.orgSlug, 'org_admin')
+        const supabase = await createClient()
 
-    // Validation
-    if (!data.title || data.title.trim().length === 0) {
-        return { error: 'Arrangementnavn er påkrevd' }
-    }
-
-    if (data.base_price < 0) {
-        return { error: 'Pris kan ikke være negativ' }
-    }
-
-    // Date validation could go here
-
-    // Insert event
-    const { data: event, error: eventError } = await supabase
-        .from('events')
-        .insert({
-            org_id: orgId,  // Server-verified orgId (IDOR FIX)
-            title: data.title,
-            description: data.description,
-            event_date: data.event_date,
-            location: data.location,
-            digital_link: data.digital_link,
-            registration_deadline: data.registration_deadline,
-            max_participants: data.max_participants,
-            open_for: data.open_for,
-            base_price: data.base_price,
-            member_price: data.member_price !== undefined ? data.member_price : data.base_price,
-            requires_active_membership: data.requires_active_membership || false,
-            requires_prev_year_payment: data.requires_prev_year_payment || false,
-            price_type: data.price_type || 'price'
-        })
-        .select()
-        .single()
-
-    if (eventError) {
-        console.error('Error creating event:', eventError)
-        return { error: 'Kunne ikke opprette arrangement' }
-    }
-
-    // Insert products if any
-    if (data.products && data.products.length > 0) {
-        const products = data.products.map(p => ({
-            event_id: event.id,
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            max_quantity: p.max_quantity,
-            available_quantity: p.max_quantity
-        }))
-
-        const { error: productsError } = await supabase
-            .from('event_products')
-            .insert(products)
-
-        if (productsError) {
-            console.error('Error creating products:', productsError)
-            // Ideally rollback event here, but for MVP we return error
-            return { error: 'Arrangement opprettet, men feil med tilleggsprodukter' }
+        // SECURITY (M1): Validate title
+        if (!data.title || data.title.trim().length === 0) {
+            return { error: 'Arrangementnavn er påkrevd' }
         }
-    }
 
-    revalidatePath(`/org/${data.orgSlug}/dashboard/arrangementer`)
-    return { success: true, event }
+        // SECURITY (M1): Validate event date is in the future
+        const dateValidation = validateFutureDate(data.event_date, 'Arrangementdato')
+        if (!dateValidation.valid) {
+            return { error: dateValidation.error }
+        }
+
+        // SECURITY (M1): Validate registration deadline if provided
+        if (data.registration_deadline) {
+            const deadlineValidation = validateFutureDate(data.registration_deadline, 'Påmeldingsfrist')
+            if (!deadlineValidation.valid) {
+                return { error: deadlineValidation.error }
+            }
+
+            // Ensure deadline is before event date
+            const rangeValidation = validateDateRange(data.registration_deadline, data.event_date)
+            if (!rangeValidation.valid) {
+                return { error: 'Påmeldingsfrist må være før arrangementdato' }
+            }
+        }
+
+        // SECURITY (M1): Validate prices
+        const priceValidation = validateAmount(data.base_price, { min: 0, max: 100000, allowZero: true })
+        if (!priceValidation.valid) {
+            return { error: priceValidation.error }
+        }
+
+        if (data.member_price !== undefined) {
+            const memberPriceValidation = validateAmount(data.member_price, { min: 0, max: 100000, allowZero: true })
+            if (!memberPriceValidation.valid) {
+                return { error: `Medlemspris: ${memberPriceValidation.error}` }
+            }
+        }
+
+        // Insert event
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .insert({
+                org_id: orgId,  // Server-verified orgId (IDOR FIX)
+                title: data.title,
+                description: data.description,
+                event_date: data.event_date,
+                location: data.location,
+                digital_link: data.digital_link,
+                registration_deadline: data.registration_deadline,
+                max_participants: data.max_participants,
+                open_for: data.open_for,
+                base_price: data.base_price,
+                member_price: data.member_price !== undefined ? data.member_price : data.base_price,
+                requires_active_membership: data.requires_active_membership || false,
+                requires_prev_year_payment: data.requires_prev_year_payment || false,
+                price_type: data.price_type || 'price'
+            })
+            .select()
+            .single()
+
+        if (eventError) {
+            console.error('Error creating event:', eventError)
+            return { error: sanitizeError(eventError) }
+        }
+
+        // Insert products if any
+        if (data.products && data.products.length > 0) {
+            const products = data.products.map(p => ({
+                event_id: event.id,
+                name: p.name,
+                description: p.description,
+                price: p.price,
+                max_quantity: p.max_quantity,
+                available_quantity: p.max_quantity
+            }))
+
+            const { error: productsError } = await supabase
+                .from('event_products')
+                .insert(products)
+
+            if (productsError) {
+                console.error('Error creating products:', productsError)
+                // Ideally rollback event here, but for MVP we return error
+                return { error: 'Arrangement opprettet, men feil med tilleggsprodukter' }
+            }
+        }
+
+        revalidatePath(`/org/${data.orgSlug}/dashboard/arrangementer`)
+        return { success: true, event }
+    } catch (error) {
+        // SECURITY (M2): Sanitize error messages
+        return { error: sanitizeError(error) }
+    }
 }
 
 export async function getEvents(orgSlug: string, filter: 'upcoming' | 'past' | 'all' = 'upcoming') {

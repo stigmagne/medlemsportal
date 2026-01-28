@@ -2,8 +2,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 
-export async function getOnboardingProgress(orgId: string) {
+export async function getOnboardingProgress(orgSlug: string) {
+    // SECURITY: Verify org access and derive orgId server-side
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -20,10 +24,13 @@ export async function getOnboardingProgress(orgId: string) {
 }
 
 export async function updateOnboardingProgress(
-    orgId: string,
+    orgSlug: string,
     step: number,
     data?: any
 ) {
+    // SECURITY: Verify org access and derive orgId server-side
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
     const supabase = await createClient()
 
     // First, get current progress to append to completed_steps
@@ -65,9 +72,12 @@ export async function updateOnboardingProgress(
 }
 
 export async function skipOnboardingStep(
-    orgId: string,
+    orgSlug: string,
     step: number
 ) {
+    // SECURITY: Verify org access and derive orgId server-side
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
     const supabase = await createClient()
 
     const { data: current } = await supabase
@@ -97,7 +107,10 @@ export async function skipOnboardingStep(
 }
 
 
-export async function completeOnboarding(orgId: string) {
+export async function completeOnboarding(orgSlug: string) {
+    // SECURITY: Verify org access and derive orgId server-side
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
     const supabase = await createClient()
 
     const { error } = await supabase

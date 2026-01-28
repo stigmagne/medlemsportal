@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import DOMPurify from 'isomorphic-dompurify'
 
 export default async function CampaignDetailsPage({
     params,
@@ -50,8 +51,8 @@ export default async function CampaignDetailsPage({
                     </h1>
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${campaign.status === 'sent' ? 'bg-green-100 text-green-800' :
-                                campaign.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                                    'bg-blue-100 text-blue-800'
+                            campaign.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                'bg-blue-100 text-blue-800'
                             }`}>
                             {campaign.status}
                         </span>
@@ -87,7 +88,8 @@ export default async function CampaignDetailsPage({
                             <h3 className="font-medium text-gray-900">Innhold</h3>
                         </div>
                         <div className="p-8 prose prose-sm max-w-none">
-                            <div dangerouslySetInnerHTML={{ __html: campaign.content }} />
+                            {/* SECURITY (H2): Use DOMPurify to prevent stored XSS */}
+                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(campaign.content) }} />
                         </div>
                     </div>
                 </div>

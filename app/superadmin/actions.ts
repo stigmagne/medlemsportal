@@ -2,13 +2,13 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { requireRole } from "@/lib/auth/helpers"
 
 export async function resolveError(errorId: string) {
-    const supabase = await createClient()
+    // SECURITY: Require superadmin role
+    await requireRole('superadmin')
 
-    // Auth check should be here or rely on RLS (but RLS enforces superadmin check for UPDATE/DELETE)
-    // We'll trust RLS + layout check for now, but explicit check is better.
-    // ...
+    const supabase = await createClient()
 
     const { error } = await supabase
         .from('error_reports')
@@ -25,9 +25,10 @@ export async function resolveError(errorId: string) {
 }
 
 export async function deleteError(errorId: string) {
-    const supabase = await createClient()
+    // SECURITY: Require superadmin role
+    await requireRole('superadmin')
 
-    // Auth check implies usage within superadmin context where RLS allows management
+    const supabase = await createClient()
     const { error } = await supabase
         .from('error_reports')
         .delete()

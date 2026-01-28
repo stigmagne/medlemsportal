@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { MembershipFee, createMembershipFee, toggleFeeStatus } from '../actions'
 
-export default function FeeSettings({ fees, org_id }: { fees: MembershipFee[], org_id: string }) {
+export default function FeeSettings({ fees, orgSlug }: { fees: MembershipFee[], orgSlug: string }) {
     const [isCreating, setIsCreating] = useState(false)
     const [newItem, setNewItem] = useState({ name: '', amount: '', due_date: '' })
     const [loading, setLoading] = useState(false)
@@ -12,7 +12,7 @@ export default function FeeSettings({ fees, org_id }: { fees: MembershipFee[], o
         e.preventDefault()
         setLoading(true)
 
-        const res = await createMembershipFee(org_id, {
+        const res = await createMembershipFee(orgSlug, {
             name: newItem.name,
             amount: parseFloat(newItem.amount),
             due_date: newItem.due_date || undefined
@@ -28,7 +28,7 @@ export default function FeeSettings({ fees, org_id }: { fees: MembershipFee[], o
     }
 
     const handleToggle = async (fee: MembershipFee) => {
-        await toggleFeeStatus(fee.id, !fee.is_active, org_id)
+        await toggleFeeStatus(fee.id, !fee.is_active, orgSlug)
     }
 
     return (

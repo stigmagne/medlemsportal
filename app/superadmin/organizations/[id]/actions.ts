@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireRole } from '@/lib/auth/helpers'
 
 export type SubscriptionUpdateData = {
     plan?: string
@@ -16,6 +17,9 @@ export async function updateOrganizationSubscription(
     orgId: string,
     data: SubscriptionUpdateData
 ) {
+    // SECURITY: Require superadmin role
+    await requireRole('superadmin')
+
     const supabase = await createClient()
 
     // We'll map the UI fields to database columns.

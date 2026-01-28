@@ -16,7 +16,7 @@ export default async function MeetingMinutesPage({ params }: { params: Promise<{
 
     if (!meeting) return <div>Møtet finnes ikke</div>
 
-    const minutes = await getMinutes(id)
+    const minutes = await getMinutes(id, slug)
 
     return (
         <div className="space-y-6">

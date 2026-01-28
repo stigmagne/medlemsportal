@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { requireOrgAccess } from "@/lib/auth/helpers"
 import { revalidatePath } from "next/cache"
+import { sanitizeError } from "@/lib/validation"
 
 // ... types ...
 export type Resource = {
@@ -95,13 +96,41 @@ export async function updateResource(prevState: any, formData: FormData) {
 }
 
 export async function deleteResource(id: string, orgSlug: string) {
-    // SECURITY: Require admin access to delete resources
-    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
-    const supabase = await createClient()
-    const { error } = await supabase.from("resources").delete().eq("id", id)
-    if (error) return { error: error.message }
-    revalidatePath(`/org/${orgSlug}/booking/ressurser`)
-    return { success: true }
+    try {
+        // SECURITY: Require admin access to delete resources
+        const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+        const supabase = await createClient()
+
+        // SECURITY (M7): Check for active/future bookings before deletion
+        const { count: futureBookings } = await supabase
+            .from('resource_bookings')
+            .select('*', { count: 'exact', head: true })
+            .eq('resource_id', id)
+            .gte('end_time', new Date().toISOString())
+
+        if (futureBookings && futureBookings > 0) {
+            return {
+                error: `Kan ikke slette ressursen. Det er ${futureBookings} fremtidige booking${futureBookings > 1 ? 'er' : ''}.`
+            }
+        }
+
+        // Proceed with deletion
+        const { error } = await supabase
+            .from("resources")
+            .delete()
+            .eq("id", id)
+            .eq("org_id", orgId) // Cross-tenant protection
+
+        if (error) {
+            console.error('Resource deletion error:', error)
+            return { error: sanitizeError(error) }
+        }
+
+        revalidatePath(`/org/${orgSlug}/booking/ressurser`)
+        return { success: true }
+    } catch (error) {
+        return { error: sanitizeError(error) }
+    }
 }
 
 export async function toggleResourceStatus(resourceId: string, isActive: boolean, orgSlug: string) {

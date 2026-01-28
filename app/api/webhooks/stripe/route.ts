@@ -2,6 +2,7 @@ import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe/client"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { logPaymentProcessed } from "@/lib/audit-log"
 import Stripe from "stripe"
 
 export async function POST(req: Request) {
@@ -42,6 +43,17 @@ export async function POST(req: Request) {
             if (error) {
                 console.error("Error updating booking payment status:", error)
                 return new NextResponse("Database Error", { status: 500 })
+            }
+
+            // SECURITY (M6): Log payment processing for audit trail
+            const orgSlug = session.metadata.org_slug
+            if (orgSlug) {
+                await logPaymentProcessed(
+                    bookingId,
+                    session.metadata.org_slug,
+                    (session.amount_total || 0) / 100, // Convert from cents
+                    'paid'
+                ).catch(err => console.error('Audit log failed:', err))
             }
         }
     }

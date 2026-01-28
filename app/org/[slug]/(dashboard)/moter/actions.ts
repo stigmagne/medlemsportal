@@ -61,14 +61,9 @@ export async function createMeeting(prevState: any, formData: FormData) {
     // Combine date and time
     const meetingDateTime = new Date(`${date}T${time}`).toISOString()
 
-    // Get org id
-    const { data: org } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', slug)
-        .single()
-
-    if (!org) return { error: 'Fant ikke organisasjon' }
+    // SECURITY: Require org admin access
+    const { requireOrgAccess } = await import('@/lib/auth/helpers')
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
 
     // User auth check
     const { data: { user } } = await supabase.auth.getUser()
@@ -77,7 +72,7 @@ export async function createMeeting(prevState: any, formData: FormData) {
     const { data: meeting, error } = await supabase
         .from('meetings')
         .insert({
-            org_id: org.id,
+            org_id: orgId, // Use server-verified orgId
             title,
             description,
             meeting_date: meetingDateTime,
@@ -113,15 +108,11 @@ export async function createMeeting(prevState: any, formData: FormData) {
 
 
 export async function getOpenCases(slug: string) {
+    // SECURITY: Require org member access
+    const { requireOrgAccess } = await import('@/lib/auth/helpers')
+    const { orgId } = await requireOrgAccess(slug, 'org_member')
+
     const supabase = await createClient()
-
-    const { data: org } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', slug)
-        .single()
-
-    if (!org) return []
 
     // Fetch cases that are open/draft AND not connected to a meeting yet
     // origin = 'meeting' ensures we don't pick up pure email decisions unless they are converted?
@@ -131,7 +122,7 @@ export async function getOpenCases(slug: string) {
     const { data } = await supabase
         .from('case_items')
         .select('id, title, formatted_id, created_at')
-        .eq('org_id', org.id)
+        .eq('org_id', orgId) // Use server-verified orgId
         .is('meeting_id', null)
         .neq('status', 'decided')
         .neq('status', 'dismissed')
@@ -141,19 +132,25 @@ export async function getOpenCases(slug: string) {
 }
 
 export async function inviteMembers(meetingId: string, slug: string, group: 'board' | 'all') {
+    // SECURITY: Require org admin access
+    const { requireOrgAccess } = await import('@/lib/auth/helpers')
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
+
     const supabase = await createClient()
 
-    // Get org id
-    const { data: org } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', slug)
+    // SECURITY: Verify meeting belongs to this org
+    const { data: meeting } = await supabase
+        .from('meetings')
+        .select('org_id')
+        .eq('id', meetingId)
         .single()
 
-    if (!org) return { error: 'Fant ikke organisasjon' }
+    if (!meeting || meeting.org_id !== orgId) {
+        return { error: 'Møte ikke funnet eller ingen tilgang' }
+    }
 
     // Fetch members based on group
-    let query = supabase.from('members').select('id, email').eq('organization_id', org.id)
+    let query = supabase.from('members').select('id, email').eq('organization_id', orgId)
 
     if (group === 'board') {
         // Assuming 'role' or a specific attribute defines board. 

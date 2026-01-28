@@ -22,22 +22,14 @@ const SALT_LENGTH = 32
 function getEncryptionKey(): Buffer {
     const keyHex = process.env.APP_ENCRYPTION_KEY
 
+    // SECURITY (M4): No fallback key - enforce proper configuration in ALL environments
     if (!keyHex) {
-        if (process.env.NODE_ENV === 'production') {
-            throw new Error(
-                'CRITICAL: APP_ENCRYPTION_KEY is not set. ' +
-                'Bank account encryption requires this environment variable. ' +
-                'Generate with: openssl rand -hex 32'
-            )
-        }
-
-        console.warn(
-            '⚠️  APP_ENCRYPTION_KEY not set. Using development fallback. ' +
-            'DO NOT USE IN PRODUCTION!'
+        throw new Error(
+            'CRITICAL: APP_ENCRYPTION_KEY is not set. ' +
+            'Bank account encryption requires this environment variable. ' +
+            'Generate with: openssl rand -hex 32 ' +
+            'Add to .env.local: APP_ENCRYPTION_KEY=<generated_key>'
         )
-
-        // Development fallback (NOT SECURE)
-        return Buffer.from('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'hex')
     }
 
     try {

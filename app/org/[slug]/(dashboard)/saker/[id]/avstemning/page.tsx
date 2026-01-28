@@ -8,13 +8,13 @@ export default async function VotingPage({
     params: Promise<{ slug: string; id: string }>
 }) {
     const { slug, id } = await params
-    const caseItem = await getCase(id)
+    const caseItem = await getCase(id, slug)
 
     if (!caseItem) notFound()
 
     // Fetch initial data
-    const votes = await getCaseVotes(id)
-    const comments = await getCaseComments(id)
+    const votes = await getCaseVotes(id, slug)
+    const comments = await getCaseComments(id, slug)
 
     return (
         <VotingClient

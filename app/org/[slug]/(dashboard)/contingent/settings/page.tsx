@@ -20,7 +20,7 @@ export default async function ContingentSettingsPage({
 
     if (!organization) redirect('/')
 
-    const fees = await getMembershipFees(organization.id)
+    const fees = await getMembershipFees(slug)
 
     return (
         <div className="space-y-6">
@@ -41,7 +41,7 @@ export default async function ContingentSettingsPage({
                 </Link>
             </div>
 
-            <FeeSettings fees={fees} org_id={organization.id} />
+            <FeeSettings fees={fees} orgSlug={slug} />
         </div>
     )
 }

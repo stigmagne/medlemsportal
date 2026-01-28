@@ -42,7 +42,7 @@ export default function MemberTypesCard({ orgId, slug, initialTypes }: MemberTyp
             return
         }
 
-        const result = await createMemberType(orgId, newName, fee, '', slug)
+        const result = await createMemberType(slug, newName, fee, '')
 
         if (result.error) {
             toast({

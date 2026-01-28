@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createCampaign, CampaignFilters } from './actions'
 import RichTextEditor from '@/components/editor/RichTextEditor'
+import DOMPurify from 'isomorphic-dompurify'
 
 export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string, onSuccess: () => void }) {
     const [subject, setSubject] = useState('')
@@ -150,7 +151,8 @@ export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string,
 
                 {preview ? (
                     <div className="border border-gray-200 rounded-md p-6 bg-white min-h-[300px] prose prose-sm max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: content }} />
+                        {/* SECURITY (H2): Use DOMPurify to prevent XSS */}
+                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />
                     </div>
                 ) : (
                     <RichTextEditor

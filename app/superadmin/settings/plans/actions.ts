@@ -2,8 +2,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireRole } from '@/lib/auth/helpers'
 
 export async function createSubscriptionPlan(data: FormData) {
+    // SECURITY: Require superadmin role
+    await requireRole('superadmin')
+
     const supabase = await createClient()
     const name = data.get('name') as string
 
@@ -34,6 +38,9 @@ export async function createSubscriptionPlan(data: FormData) {
 }
 
 export async function updateSubscriptionPlan(id: string, data: FormData) {
+    // SECURITY: Require superadmin role
+    await requireRole('superadmin')
+
     const supabase = await createClient()
     const name = data.get('name') as string
 
@@ -63,6 +70,9 @@ export async function updateSubscriptionPlan(id: string, data: FormData) {
 }
 
 export async function deleteSubscriptionPlan(id: string) {
+    // SECURITY: Require superadmin role
+    await requireRole('superadmin')
+
     const supabase = await createClient()
 
     // Check usage? For now hard delete or set active=false

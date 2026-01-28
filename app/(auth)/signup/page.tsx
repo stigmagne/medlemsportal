@@ -21,6 +21,14 @@ export default function SignupPage() {
         setError(null)
         setLoading(true)
 
+        // SECURITY: Validate password strength (H1)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,}$/
+        if (!passwordRegex.test(password)) {
+            setError('Passordet må være minst 12 tegn og inneholde stor bokstav, liten bokstav og et tall')
+            setLoading(false)
+            return
+        }
+
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
@@ -162,12 +170,14 @@ export default function SignupPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={12}
+                        pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,}$"
+                        title="Minimum 12 tegn med stor bokstav, liten bokstav og tall"
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        placeholder="Minimum 6 tegn"
+                        placeholder="Minimum 12 tegn"
                     />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Minimum 6 tegn
+                        Minimum 12 tegn med stor bokstav, liten bokstav og tall
                     </p>
                 </div>
 

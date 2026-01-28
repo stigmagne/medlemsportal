@@ -34,7 +34,7 @@ export default function VotingClient({
         if (!confirm(`Er du sikker på at du vil stemme ${vote === 'support' ? 'FOR' : vote === 'oppose' ? 'MOT' : 'AVSTÅR'}?`)) return
 
         startTransition(async () => {
-            const res = await castVote(id, vote)
+            const res = await castVote(id, vote, slug)
             if (res.error) {
                 alert(res.error)
             } else {
@@ -54,7 +54,7 @@ export default function VotingClient({
         if (!comment.trim()) return
 
         startTransition(async () => {
-            const res = await addComment(id, comment)
+            const res = await addComment(id, comment, slug)
             if (res.error) {
                 alert(res.error)
             } else {

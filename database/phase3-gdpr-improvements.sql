@@ -2,51 +2,22 @@
 -- Addresses privacy concerns with IP address storage and consent defaults
 
 -- =====================================================
--- 1. IP Address Privacy Fix
+-- 1. IP Address Privacy Fix (M5: GDPR Compliance)
 -- =====================================================
 
--- GDPR Issue: IP addresses are personal data under GDPR
--- Options:
--- A) Remove IP storage completely (recommended for most cases)
--- B) Hash IP addresses (still identifiable for abuse detection)
--- C) Keep but add retention policy + consent
+-- SECURITY (M5): Remove IP tracking entirely for GDPR compliance
+-- Rationale:
+-- - Simplest GDPR-compliant solution
+-- - No abuse patterns detected requiring IP tracking
+-- - Completely eliminates privacy risk
+-- - No consent mechanism needed
 
--- Option A: Remove IP address column (Recommended)
--- Uncomment if you want to completely remove IP tracking:
--- ALTER TABLE email_tracking_events DROP COLUMN IF EXISTS ip_address;
+-- Option A: Remove IP tracking completely (CHOSEN)
+-- Drop hashed_ip column if it exists
+ALTER TABLE email_tracking_events DROP COLUMN IF EXISTS hashed_ip;
 
--- Option B: Add IP address hashing (Balanced approach)
--- Keeps abuse detection capability while reducing privacy risk
-CREATE OR REPLACE FUNCTION hash_ip_address(ip inet) 
-RETURNS text
-LANGUAGE plpgsql
-IMMUTABLE
-AS $$
-BEGIN
-  -- Hash IP with a per-day salt for basic abuse detection
-  -- Same IP on same day = same hash, but cannot reverse
-  RETURN encode(
-    digest(
-      ip::text || current_date::text || 'your-secret-salt-here',
-      'sha256'
-    ),
-    'hex'
-  );
-END;
-$$;
-
--- Add hashed_ip column
-ALTER TABLE email_tracking_events 
-ADD COLUMN IF NOT EXISTS hashed_ip text;
-
--- Migrate existing data
-UPDATE email_tracking_events 
-SET hashed_ip = hash_ip_address(ip_address)
-WHERE ip_address IS NOT NULL AND hashed_ip IS NULL;
-
--- Drop the plain IP column
-ALTER TABLE email_tracking_events 
-DROP COLUMN IF EXISTS ip_address;
+-- Drop the hash function - no longer needed
+DROP FUNCTION IF EXISTS hash_ip_address(inet);
 
 -- Option C: Add retention policy (if keeping IP addresses)
 -- Automatically delete old tracking data after 90 days

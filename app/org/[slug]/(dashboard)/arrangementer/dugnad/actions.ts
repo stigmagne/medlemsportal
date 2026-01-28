@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { requireOrgAccess } from "@/lib/auth/helpers"
 
 export type VolunteeringEvent = {
     id: string
@@ -67,12 +68,14 @@ export async function createVolunteeringEvent(prevState: any, formData: FormData
     const startTime = formData.get("start_time") as string
     const endTime = formData.get("end_time") as string
     const location = formData.get("location") as string
-    const orgId = formData.get("org_id") as string
     const orgSlug = formData.get("org_slug") as string
 
-    if (!title || !startTime || !endTime || !orgId) {
+    if (!title || !startTime || !endTime || !orgSlug) {
         return { error: "Mangler påkrevde felt" }
     }
+
+    // SECURITY: Verify org access and derive orgId server-side
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
 
     const { data, error } = await supabase
         .from("volunteering_events")

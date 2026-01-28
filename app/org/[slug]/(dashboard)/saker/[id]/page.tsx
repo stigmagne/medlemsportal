@@ -10,7 +10,7 @@ export default async function CaseDetailsPage({
     params: Promise<{ slug: string; id: string }>
 }) {
     const { slug, id } = await params
-    const caseItem = await getCase(id)
+    const caseItem = await getCase(id, slug)
 
     if (!caseItem) notFound()
 

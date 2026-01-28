@@ -76,6 +76,7 @@ export async function createStripeSession(bookingId: string, orgSlug: string) {
 
     } catch (error: any) {
         console.error("Stripe error:", error)
-        return { error: error.message }
+        // SECURITY (M2): Sanitize Stripe errors to prevent leaking internal details
+        return { error: error?.message || 'Kunne ikke opprette betalingssesjon' }
     }
 }

@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess } from '@/lib/auth/helpers'
+import { sanitizeError } from '@/lib/validation'
 import { revalidatePath } from 'next/cache'
 
 export type MembershipFee = {
@@ -13,71 +15,109 @@ export type MembershipFee = {
     created_at: string
 }
 
-export async function createMembershipFee(org_id: string, data: { name: string; amount: number; due_date?: string }) {
-    const supabase = await createClient()
+/**
+ * SECURITY (M9): Standardized auth pattern for membership fee creation
+ */
+export async function createMembershipFee(
+    orgSlug: string,
+    data: { name: string; amount: number; due_date?: string }
+) {
+    try {
+        // PATTERN 1: Verify org access with requireOrgAccess helper
+        const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+        const supabase = await createClient()
 
-    // Verify access
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: 'Unauthorized' }
+        // PATTERN 2: Insert with server-verified orgId
+        const { error } = await supabase
+            .from('membership_fees')
+            .insert({
+                organization_id: orgId, // Server-verified, not from client
+                name: data.name,
+                amount: data.amount,
+                due_date: data.due_date || null,
+                is_active: true
+            })
 
-    const { data: access } = await supabase
-        .from('user_org_access')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('organization_id', org_id)
-        .single()
+        if (error) {
+            console.error('Error creating fee:', error)
+            return { error: sanitizeError(error) }
+        }
 
-    if (!access) return { success: false, error: 'Forbidden' }
-
-    const { error } = await supabase
-        .from('membership_fees')
-        .insert({
-            organization_id: org_id,
-            name: data.name,
-            amount: data.amount,
-            due_date: data.due_date || null,
-            is_active: true
-        })
-
-    if (error) {
-        console.error('Error creating fee:', error)
-        return { success: false, error: error.message }
+        revalidatePath(`/org/${orgSlug}/contingent`)
+        return { success: true }
+    } catch (error) {
+        return { error: sanitizeError(error) }
     }
-
-    revalidatePath(`/org/${org_id}/contingent/innstillinger`) // Note: This might need slug validation if we use slug in path
-    return { success: true }
 }
 
-export async function getMembershipFees(org_id: string): Promise<MembershipFee[]> {
-    const supabase = await createClient()
+/**
+ * SECURITY (M9): Standardized auth pattern for fetching membership fees
+ */
+export async function getMembershipFees(orgSlug: string): Promise<MembershipFee[]> {
+    try {
+        // PATTERN 1: Verify org access
+        const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
+        const supabase = await createClient()
 
-    // Auth check optional given RLS, but good practice
-    const { data, error } = await supabase
-        .from('membership_fees')
-        .select('*')
-        .eq('organization_id', org_id)
-        .order('created_at', { ascending: false })
+        // PATTERN 2: Query with server-verified orgId
+        const { data, error } = await supabase
+            .from('membership_fees')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('created_at', { ascending: false })
 
-    if (error) {
-        console.error('Error fetching fees:', error)
+        if (error) {
+            console.error('Error fetching fees:', error)
+            return []
+        }
+
+        return data as MembershipFee[]
+    } catch (error) {
+        console.error('Error in getMembershipFees:', error)
         return []
     }
-
-    return data as MembershipFee[]
 }
 
-export async function toggleFeeStatus(fee_id: string, is_active: boolean, org_id: string) {
-    const supabase = await createClient()
+/**
+ * SECURITY (M9): Standardized auth pattern for toggling fee status
+ */
+export async function toggleFeeStatus(
+    feeId: string,
+    isActive: boolean,
+    orgSlug: string
+) {
+    try {
+        // PATTERN 1: Verify org access
+        const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+        const supabase = await createClient()
 
-    // Access check handled by RLS typically, but explicit here too
-    const { error } = await supabase
-        .from('membership_fees')
-        .update({ is_active })
-        .eq('id', fee_id)
-        .eq('organization_id', org_id)
+        // PATTERN 2: Verify resource belongs to org before update
+        const { data: fee } = await supabase
+            .from('membership_fees')
+            .select('organization_id')
+            .eq('id', feeId)
+            .single()
 
-    if (error) return { success: false, error: error.message }
+        if (!fee || fee.organization_id !== orgId) {
+            return { error: 'Kontingent ikke funnet' }
+        }
 
-    revalidatePath(`/org/${org_id}/contingent/innstillinger`)
-    return { success: true }
+        // PATTERN 3: Update with server-verified orgId
+        const { error } = await supabase
+            .from('membership_fees')
+            .update({ is_active: isActive })
+            .eq('id', feeId)
+            .eq('organization_id', orgId) // Double verification
+
+        if (error) {
+            console.error('Error toggling fee status:', error)
+            return { error: sanitizeError(error) }
+        }
+
+        revalidatePath(`/org/${orgSlug}/contingent`)
+        return { success: true }
+    } catch (error) {
+        return { error: sanitizeError(error) }
+    }
 }
+

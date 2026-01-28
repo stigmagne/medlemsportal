@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 
 export type MeetingDecision = {
     id: string
@@ -11,8 +12,22 @@ export type MeetingDecision = {
 export type TiptapContent = Record<string, any>
 
 
-export async function getMinutes(meetingId: string) {
+export async function getMinutes(meetingId: string, orgSlug: string) {
+    // SECURITY: Verify org access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_member')
+
     const supabase = await createClient()
+
+    // SECURITY: Verify meeting belongs to this org
+    const { data: meeting } = await supabase
+        .from('meetings')
+        .select('org_id')
+        .eq('id', meetingId)
+        .single()
+
+    if (!meeting || meeting.org_id !== orgId) {
+        throw new Error('Meeting not found or access denied')
+    }
 
     const { data, error } = await supabase
         .from('meeting_minutes')
@@ -27,8 +42,22 @@ export async function getMinutes(meetingId: string) {
     return data
 }
 
-export async function saveMinutes(meetingId: string, content: TiptapContent, decisions: MeetingDecision[]) {
+export async function saveMinutes(meetingId: string, content: TiptapContent, decisions: MeetingDecision[], orgSlug: string) {
+    // SECURITY: Verify org access
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
     const supabase = await createClient()
+
+    // SECURITY: Verify meeting belongs to this org
+    const { data: meeting } = await supabase
+        .from('meetings')
+        .select('org_id')
+        .eq('id', meetingId)
+        .single()
+
+    if (!meeting || meeting.org_id !== orgId) {
+        return { error: 'Meeting not found or access denied' }
+    }
 
     // Check if exists
     const { data: existing } = await supabase
@@ -66,10 +95,24 @@ export async function saveMinutes(meetingId: string, content: TiptapContent, dec
 }
 
 export async function publishMinutes(meetingId: string, slug: string) {
+    // SECURITY: Verify org access - publishing minutes requires admin
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return { error: 'Not authenticated' }
+
+    // SECURITY: Verify meeting belongs to this org
+    const { data: meeting } = await supabase
+        .from('meetings')
+        .select('org_id')
+        .eq('id', meetingId)
+        .single()
+
+    if (!meeting || meeting.org_id !== orgId) {
+        return { error: 'Meeting not found or access denied' }
+    }
 
     // 1. Get attendee snapshot
     const { data: attendees } = await supabase

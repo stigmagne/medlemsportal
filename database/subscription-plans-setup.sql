@@ -17,11 +17,14 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
 ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
 
 -- Policies:
--- Everyone can read active plans (needed for organization dashboard maybe? or just superadmin?)
+-- SECURITY (M8): Restrict viewing to authenticated users only
 -- Superadmins can do everything.
 
-CREATE POLICY "Anyone can view active plans" ON subscription_plans
-    FOR SELECT USING (true); -- Simplified for now, or restriction to auth users.
+-- SECURITY (M8): Only authenticated users can view subscription plans
+CREATE POLICY "Authenticated users can view active plans" ON subscription_plans
+    FOR SELECT 
+    TO authenticated
+    USING (true);
 
 CREATE POLICY "Superadmins can manage plans" ON subscription_plans
     FOR ALL USING (

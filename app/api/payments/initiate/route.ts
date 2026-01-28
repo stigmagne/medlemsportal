@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
 import { calculateFees } from '@/lib/payments/calculate-fees'
 import { createClient } from '@/lib/supabase/server'
+import { requireOrgAccess } from '@/lib/auth/helpers'
 
 export async function POST(request: NextRequest) {
     try {
         const {
-            organizationId,
+            orgSlug,
             amount,  // in NOK (e.g., 100)
             memberId,
             paymentType,
@@ -14,6 +15,17 @@ export async function POST(request: NextRequest) {
             eventId,
             paymentMethod = 'stripe' // 'stripe' | 'invoice'
         } = await request.json()
+
+        // SECURITY: Require org access - derive orgId from slug server-side
+        const { orgId: organizationId } = await requireOrgAccess(orgSlug, 'org_member')
+
+        // SECURITY: Validate amount (positive, not null, reasonable upper limit)
+        if (!amount || typeof amount !== 'number' || amount <= 0 || amount > 1000000) {
+            return NextResponse.json(
+                { error: 'Ugyldig beløp. Må være mellom 1 og 1 000 000 NOK.' },
+                { status: 400 }
+            )
+        }
 
         const amountInOre = Math.round(amount * 100)
 
@@ -28,6 +40,23 @@ export async function POST(request: NextRequest) {
 
         if (!org) {
             return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+        }
+
+        // SECURITY (M3): Verify booking ownership if bookingId is provided
+        if (eventId) {
+            // For event payments, verify the event belongs to the organization
+            const { data: event } = await supabase
+                .from('events')
+                .select('org_id')
+                .eq('id', eventId)
+                .single()
+
+            if (!event || event.org_id !== organizationId) {
+                return NextResponse.json(
+                    { error: 'Event ikke funnet eller tilhører ikke foreningen' },
+                    { status: 404 }
+                )
+            }
         }
 
         // --- INVOICE FLOW ---
