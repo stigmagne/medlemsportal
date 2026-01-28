@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { notFound } from 'next/navigation'
 import EditMemberForm from './EditMemberForm'
 import MemberFamilySection from '@/components/families/MemberFamilySection'
+import GdprSection from '@/components/members/GdprSection'
 
 export default async function EditMemberPage({
     params,
@@ -93,15 +94,7 @@ export default async function EditMemberPage({
             <EditMemberForm member={member} org_id={org_id} slug={slug} memberTypes={memberTypes || []} />
             <div className="mt-8 border-t pt-8">
                 <h2 className="text-xl font-bold mb-4">Familiekobling</h2>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    {/* We need to import MemberFamilySection at the top, but since we are replacing the return, 
-                        we can't easily insert imports via replace_file_content without context. 
-                        Actually I can use multi_replace or just assume standard Next.js auto-import behavior 
-                        won't work here. I need to add the import. 
-                        
-                        I will use a separate replace call for the import.
-                    */}
-                    {/* @ts-ignore - Component will be imported in next step */}
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     <MemberFamilySection
                         member={member}
                         orgId={org_id}
@@ -109,6 +102,15 @@ export default async function EditMemberPage({
                         availableFamilies={availableFamilies}
                     />
                 </div>
+            </div>
+
+            <div className="mt-8 border-t pt-8">
+                <h2 className="text-xl font-bold mb-4">GDPR & Personvern</h2>
+                <GdprSection
+                    memberId={member.id}
+                    memberName={`${member.first_name} ${member.last_name}`}
+                    orgSlug={slug}
+                />
             </div>
         </div>
     )
