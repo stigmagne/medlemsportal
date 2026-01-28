@@ -4,16 +4,40 @@ import { createClient } from '@/lib/supabase/server'
 // Initialize Resend with API key or a placeholder to prevent build errors
 const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder_key')
 
+// Default from address - uses environment variable or falls back to Resend default
+const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'Din Forening <noreply@medlemsportalen.no>'
+
 type SendEmailParams = {
     to: string
     subject: string
     html: string
     text?: string
-    from?: string // Default to a configured sender
+    from?: string // Will use DEFAULT_FROM if not specified
     organizationId: string
     campaignId?: string
     memberId?: string
     replyTo?: string | string[]
+}
+
+/**
+ * Get organization's email settings for sending
+ */
+async function getOrgEmailSettings(organizationId: string): Promise<{ contactEmail?: string; orgName?: string }> {
+    try {
+        const supabase = await createClient()
+        const { data: org } = await supabase
+            .from('organizations')
+            .select('contact_email, name')
+            .eq('id', organizationId)
+            .single()
+
+        return {
+            contactEmail: org?.contact_email || undefined,
+            orgName: org?.name || undefined
+        }
+    } catch {
+        return {}
+    }
 }
 
 export async function sendEmail({
@@ -21,20 +45,38 @@ export async function sendEmail({
     subject,
     html,
     text,
-    from = process.env.RESEND_FROM_EMAIL || 'Din Forening <onboarding@resend.dev>', // Update this with verified domain later
+    from,
     organizationId,
     campaignId,
     memberId,
     replyTo
 }: SendEmailParams) {
     try {
+        // Get organization's email settings if not explicitly provided
+        let finalFrom = from || DEFAULT_FROM
+        let finalReplyTo = replyTo
+
+        if (organizationId && !replyTo) {
+            const orgSettings = await getOrgEmailSettings(organizationId)
+
+            // Use org's contact email as reply-to if available
+            if (orgSettings.contactEmail) {
+                finalReplyTo = orgSettings.contactEmail
+            }
+
+            // Optionally customize from name with org name (email stays the same for deliverability)
+            if (orgSettings.orgName && !from) {
+                finalFrom = `${orgSettings.orgName} <${DEFAULT_FROM.match(/<(.+)>/)?.[1] || 'noreply@medlemsportalen.no'}>`
+            }
+        }
+
         const data = await resend.emails.send({
-            from,
+            from: finalFrom,
             to,
             subject,
             html,
             text,
-            replyTo: replyTo as string | string[] | undefined
+            replyTo: finalReplyTo as string | string[] | undefined
         })
 
         if (data.error) {
@@ -53,7 +95,7 @@ export async function sendEmail({
             organizationId,
             campaignId,
             memberId,
-            status: 'sent', // Resend queues it, but for our log 'sent' or 'queued' is fine.
+            status: 'sent',
             providerId: data.data?.id
         })
 
@@ -75,17 +117,38 @@ export async function sendEmail({
 // Batch Send
 export async function sendEmailsBatch(emails: SendEmailParams[]) {
     try {
-        const batchPayload = emails.map(e => ({
-            from: e.from || process.env.RESEND_FROM_EMAIL || 'Din Forening <onboarding@resend.dev>',
-            to: e.to,
-            subject: e.subject,
-            html: e.html,
-            text: e.text,
-            reply_to: e.replyTo as string | string[] | undefined
+        // For batch, we need to resolve org settings upfront
+        const orgSettingsCache: Record<string, { contactEmail?: string; orgName?: string }> = {}
+
+        const batchPayload = await Promise.all(emails.map(async e => {
+            let finalFrom = e.from || DEFAULT_FROM
+            let finalReplyTo = e.replyTo
+
+            if (e.organizationId) {
+                if (!orgSettingsCache[e.organizationId]) {
+                    orgSettingsCache[e.organizationId] = await getOrgEmailSettings(e.organizationId)
+                }
+                const orgSettings = orgSettingsCache[e.organizationId]
+
+                if (orgSettings.contactEmail && !e.replyTo) {
+                    finalReplyTo = orgSettings.contactEmail
+                }
+                if (orgSettings.orgName && !e.from) {
+                    finalFrom = `${orgSettings.orgName} <${DEFAULT_FROM.match(/<(.+)>/)?.[1] || 'noreply@medlemsportalen.no'}>`
+                }
+            }
+
+            return {
+                from: finalFrom,
+                to: e.to,
+                subject: e.subject,
+                html: e.html,
+                text: e.text,
+                reply_to: finalReplyTo as string | string[] | undefined
+            }
         }))
 
         // Chunking for Resend Batch Limit (Max 100)
-        // We handle chunking here to be safe, even if caller chunks too.
         const chunks = []
         for (let i = 0; i < batchPayload.length; i += 100) {
             chunks.push(batchPayload.slice(i, i + 100))
@@ -100,16 +163,11 @@ export async function sendEmailsBatch(emails: SendEmailParams[]) {
             if (error) {
                 console.error('Batch Send Error:', error)
                 errors.push(error)
-                // We should probably log failed emails here, but we lack the context of which ones failed if the whole batch fails.
-                // If the batch fails, assume all in chunk failed.
                 continue
             }
 
             if (data && data.data) {
                 successCount += data.data.length
-                // Log success for these IDs? 
-                // Currently logging happens in the caller in the loop. 
-                // Since this is batch, we need to return the IDs so caller can update status.
             }
         }
 
