@@ -209,7 +209,7 @@ export async function createBooking(prevState: any, formData: FormData) {
     }
 
 
-    revalidatePath(`/org/${orgSlug}/minside/booking`)
+    revalidatePath(`/org/${orgSlug}/min-side/booking`)
 
     if (requiresPayment) {
         // Redirect to payment page
@@ -233,6 +233,6 @@ export async function cancelBooking(bookingId: string, orgSlug: string) {
 
     if (error) return { error: "Kunne ikke avbestille." }
 
-    revalidatePath(`/org/${orgSlug}/minside/booking`)
+    revalidatePath(`/org/${orgSlug}/min-side/booking`)
     return { success: true }
 }

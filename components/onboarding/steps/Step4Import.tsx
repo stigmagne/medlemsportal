@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { skipOnboardingStep } from '@/app/actions/onboarding'
 
-export default function Step4Import({ orgId }: { orgId: string, data: any }) {
+export default function Step4Import({ orgSlug }: { orgSlug: string, data: any }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
 
     const handleSkip = async () => {
         setLoading(true)
-        await skipOnboardingStep(orgId, 4)
+        await skipOnboardingStep(orgSlug, 4)
         router.push('/onboarding/5')
     }
 

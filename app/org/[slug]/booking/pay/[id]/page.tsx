@@ -79,7 +79,7 @@ export default async function BookingPaymentPage({
                         <PayButton bookingId={id} orgSlug={slug} />
                     )}
                     <Button variant="ghost" asChild className="w-full">
-                        <Link href={`/org/${slug}/minside/booking`}>
+                        <Link href={`/org/${slug}/min-side/booking`}>
                             Tilbake til mine bookinger
                         </Link>
                     </Button>

@@ -19,7 +19,7 @@ export default async function MyExpensesPage({ params }: { params: Promise<{ slu
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">Mine utlegg og reiseregninger</h1>
                 <Link
-                    href={`/org/${slug}/minside/utlegg/ny`}
+                    href={`/org/${slug}/min-side/utlegg/ny`}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
                 >
                     + Nytt utlegg
