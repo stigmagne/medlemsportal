@@ -5,7 +5,7 @@ import { createCampaign, CampaignFilters } from './actions'
 import RichTextEditor from '@/components/editor/RichTextEditor'
 import DOMPurify from 'isomorphic-dompurify'
 
-export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string, onSuccess: () => void }) {
+export default function NewCampaignForm({ orgSlug, onSuccess }: { orgSlug: string, onSuccess: () => void }) {
     const [subject, setSubject] = useState('')
     const [replyTo, setReplyTo] = useState('')
     const [content, setContent] = useState('')
@@ -26,7 +26,7 @@ export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string,
             if (customCategory.trim()) filters.category = [customCategory.trim()]
         }
 
-        const res = await createCampaign(org_id, subject, content, filters, replyTo)
+        const res = await createCampaign(orgSlug, subject, content, filters, replyTo)
 
         if (res.error) {
             alert('Feil: ' + res.error)
@@ -158,7 +158,7 @@ export default function NewCampaignForm({ org_id, onSuccess }: { org_id: string,
                     <RichTextEditor
                         content={content}
                         onChange={setContent}
-                        orgId={org_id}
+                        orgId={orgSlug}
                     />
                 )}
             </div>

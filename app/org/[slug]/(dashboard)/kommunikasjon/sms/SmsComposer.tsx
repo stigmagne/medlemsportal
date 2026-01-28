@@ -17,7 +17,7 @@ interface MemberGroup {
 }
 
 interface SmsComposerProps {
-    orgId: string
+    orgSlug: string
     groups: MemberGroup[]
     totalMembers: number
 }
@@ -25,7 +25,7 @@ interface SmsComposerProps {
 // Mock pricing
 const PRICE_PER_SEGMENT = 0.59 // NOK
 
-export default function SmsComposer({ orgId, groups, totalMembers }: SmsComposerProps) {
+export default function SmsComposer({ orgSlug, groups, totalMembers }: SmsComposerProps) {
     const [selectedGroup, setSelectedGroup] = useState<string>("all")
     const [message, setMessage] = useState("")
     const [isPending, startTransition] = useTransition()
@@ -43,7 +43,7 @@ export default function SmsComposer({ orgId, groups, totalMembers }: SmsComposer
         if (!message.trim()) return
 
         startTransition(async () => {
-            const result = await sendSms(orgId, message, selectedGroup)
+            const result = await sendSms(orgSlug, message, selectedGroup)
 
             if (result.success) {
                 toast({

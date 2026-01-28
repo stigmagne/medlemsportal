@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { getEvents } from '@/app/actions/events'
 import EventList from '@/components/events/EventList'
 import Link from 'next/link'
@@ -14,12 +13,8 @@ export default async function EventsPage({
     const { tab } = await searchParams
     const activeTab = tab === 'past' ? 'past' : 'upcoming'
 
-    const supabase = await createClient()
-    const { data: org } = await supabase.from('organizations').select('id').eq('slug', slug).single()
-
-    if (!org) return <div>Fant ikke organisasjon</div>
-
-    const events = await getEvents(org.id, activeTab)
+    // getEvents uses requireOrgAccess internally for security
+    const events = await getEvents(slug, activeTab)
 
     return (
         <div className="max-w-6xl mx-auto py-8 px-4">
