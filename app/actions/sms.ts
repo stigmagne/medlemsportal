@@ -2,14 +2,26 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requireOrgAccess } from '@/lib/auth/helpers'
+import { enforceRateLimit, RateLimitStrategy } from '@/lib/rate-limit'
 
 /**
  * SECURITY FIX: This function previously used SERVICE_ROLE_KEY without authentication,
  * allowing anyone to send SMS at organization expense. Now properly secured.
+ * RATE LIMIT: 10 SMS per hour per organization (H5)
  */
 export async function sendSms(orgSlug: string, message: string, groupId: string) {
     // CRITICAL: Verify user is authenticated and has admin access to this org
     const { user, orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
+    // RATE LIMIT: Prevent SMS abuse - 10 requests per hour per organization
+    try {
+        await enforceRateLimit(RateLimitStrategy.SMS, orgId)
+    } catch (error: any) {
+        return {
+            success: false,
+            error: `Rate limit overskredet. Vennligst vent ${Math.ceil((error.retryAfter || 60) / 60)} minutter før du sender flere SMS.`
+        }
+    }
 
     const supabase = await createClient()  // Use regular auth client, NOT service role
 

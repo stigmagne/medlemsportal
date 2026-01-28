@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        // Rate limiting: 5 onboarding attempts per hour per user
+        const { enforceRateLimit, RateLimitStrategy } = await import('@/lib/rate-limit');
+        await enforceRateLimit(RateLimitStrategy.ONBOARDING, user.id);
+
         const { data: access } = await supabase
             .from('user_org_access')
             .select('role')

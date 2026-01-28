@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireOrgAccess } from '@/lib/auth/helpers'
 import { sendEmail } from '@/lib/email/client'
 import { revalidatePath } from 'next/cache'
+import { enforceRateLimit, RateLimitStrategy } from '@/lib/rate-limit'
 
 export type Campaign = {
     id: string
@@ -66,6 +67,16 @@ export async function createCampaign(orgSlug: string, subject: string, content: 
 export async function sendCampaign(orgSlug: string, campaignId: string) {
     // SECURITY: Require admin access to send campaigns
     const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+
+    // RATE LIMIT: Prevent email spam - 5 campaigns per hour per organization (H5)
+    try {
+        await enforceRateLimit(RateLimitStrategy.EMAIL_CAMPAIGN, orgId)
+    } catch (error: any) {
+        return {
+            error: `Rate limit overskredet. Maksimalt 5 kampanjer per time. Vennligst vent ${Math.ceil((error.retryAfter || 60) / 60)} minutter.`
+        }
+    }
+
     const supabase = await createClient()
 
     // 1. Fetch Campaign & Org Details (contact_email, name)

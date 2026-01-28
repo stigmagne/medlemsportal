@@ -6,6 +6,16 @@ import { logPaymentProcessed } from "@/lib/audit-log"
 import Stripe from "stripe"
 
 export async function POST(req: Request) {
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1'
+
+    // Flood protection: 100 webhook requests per minute per IP
+    const { checkRateLimit, RateLimitStrategy } = await import('@/lib/rate-limit');
+    const rateLimit = await checkRateLimit(RateLimitStrategy.WEBHOOK, ip)
+
+    if (!rateLimit.success) {
+        return new NextResponse("Too Many Requests", { status: 429 })
+    }
+
     const body = await req.text()
     const signature = (await headers()).get("Stripe-Signature") as string
 

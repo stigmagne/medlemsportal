@@ -223,11 +223,53 @@ export async function updateRsvp(meetingId: string, slug: string, status: string
 
 // Mock function for sending emails for now
 export async function sendMeetingInvitation(meetingId: string, slug: string) {
-    // In a real implementation:
-    // 1. Fetch meeting details
-    // 2. Fetch all attendees with 'pending' status
-    // 3. Loop and send emails via Resend
+    const supabase = await createClient()
+    const { requireOrgAccess } = await import('@/lib/auth/helpers')
+    // We assume caller has access, but good to be safe if exposed as server action
+    await requireOrgAccess(slug, 'org_admin')
 
-    // For MVP/Demo:
-    return { success: true, message: 'Invitations queued (Mock)' }
+    // 1. Fetch meeting details
+    const { data: meeting } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('id', meetingId)
+        .single()
+
+    if (!meeting) return { error: 'Meeting not found' }
+
+    // 2. Fetch all attendees with 'pending' status
+    const { data: attendees } = await supabase
+        .from('meeting_attendees')
+        .select('member_id, members(email, first_name)')
+        .eq('meeting_id', meetingId)
+        .eq('rsvp_status', 'pending')
+
+    if (!attendees || attendees.length === 0) {
+        return { success: true, message: 'No pending attendees to invite' }
+    }
+
+    // 3. Loop and send emails via Resend (Mock for now, logging links)
+    const { generateRsvpToken } = await import('@/lib/rsvp/tokens')
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+
+    console.log(`--- SENDING INVITES FOR: ${meeting.title} ---`)
+
+    for (const attendee of attendees) {
+        // Token valid for 30 days
+        const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000
+        const token = generateRsvpToken(meetingId, attendee.member_id, expiresAt)
+
+        // Links
+        const yesLink = `${baseUrl}/rsvp?token=${token}&status=yes`
+        const noLink = `${baseUrl}/rsvp?token=${token}&status=no`
+        const maybeLink = `${baseUrl}/rsvp?token=${token}&status=maybe`
+        const pageLink = `${baseUrl}/rsvp?token=${token}`
+
+        console.log(`To: ${(attendee.members as any)?.email}`)
+        console.log(`   RSVP Page: ${pageLink}`)
+        console.log(`   Direct YES: ${yesLink}`)
+        console.log(`   Direct NO:  ${noLink}`)
+    }
+
+    return { success: true, message: `Invitations queued/logged for ${attendees.length} members` }
 }

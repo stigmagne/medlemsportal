@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:security:cross-org": "ts-node scripts/security/test_cross_org_access.ts",
+    "test:security:rate-limit": "ts-node scripts/security/test_rate_limits.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -26,6 +28,8 @@
     "@tiptap/extension-underline": "^3.17.0",
     "@tiptap/react": "^3.17.0",
     "@tiptap/starter-kit": "^3.17.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

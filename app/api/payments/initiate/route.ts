@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe/client'
 import { calculateFees } from '@/lib/payments/calculate-fees'
 import { createClient } from '@/lib/supabase/server'
 import { requireOrgAccess } from '@/lib/auth/helpers'
+import { enforceRateLimit, RateLimitStrategy, formatRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,7 +18,26 @@ export async function POST(request: NextRequest) {
         } = await request.json()
 
         // SECURITY: Require org access - derive orgId from slug server-side
-        const { orgId: organizationId } = await requireOrgAccess(orgSlug, 'org_member')
+        const { orgId: organizationId, user } = await requireOrgAccess(orgSlug, 'org_member')
+
+        // RATE LIMIT: Prevent payment spam - 3 requests per minute per user (H5)
+        try {
+            await enforceRateLimit(RateLimitStrategy.PAYMENT, user.id)
+        } catch (error: any) {
+            return NextResponse.json(
+                { error: `Rate limit overskredet. Vennligst vent ${error.retryAfter || 60} sekunder.` },
+                {
+                    status: 429,
+                    headers: formatRateLimitHeaders({
+                        success: false,
+                        limit: error.limit,
+                        remaining: 0,
+                        reset: error.reset,
+                        retryAfter: error.retryAfter
+                    })
+                }
+            )
+        }
 
         // SECURITY: Validate amount (positive, not null, reasonable upper limit)
         if (!amount || typeof amount !== 'number' || amount <= 0 || amount > 1000000) {

@@ -44,6 +44,12 @@ export async function createCase(prevState: any, formData: FormData) {
     // Auth & Org Check - Use server-verified orgId
     const { user, orgId } = await requireOrgAccess(slug, 'org_admin')
 
+    // Rate limiting: 20 case creations (potentially with uploads) per hour per user
+    const { enforceRateLimit, RateLimitStrategy } = await import('@/lib/rate-limit');
+    // Using FILE_UPLOAD strategy here as a proxy for "Case Creation with potential upload"
+    // or we could use a specific CASE_CREATION strategy. FILE_UPLOAD is fine.
+    await enforceRateLimit(RateLimitStrategy.FILE_UPLOAD, user.id);
+
     // Validate file BEFORE upload
     if (file && file.size > 0 && file.name !== 'undefined') {
         const validation = validateCaseAttachment(file)
