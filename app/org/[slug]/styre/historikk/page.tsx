@@ -61,7 +61,7 @@ export default async function PublicBoardHistoryPage({ params }: { params: Promi
                     <div key={year} className="space-y-6">
                         <h2 className="text-2xl font-bold border-b pb-2">{year}</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {groupedHistory[year].map((pos) => (
+                            {groupedHistory[year].map((pos: PublicBoardMember) => (
                                 <div key={pos.position_id} className={pos.term_end_date ? 'opacity-75' : ''}>
                                     <BoardMemberCard member={pos} />
                                     <div className="mt-2 text-sm text-center text-muted-foreground">
