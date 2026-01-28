@@ -101,7 +101,7 @@ export default async function Home() {
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                         <Button asChild size="lg" className="h-12 px-8 text-base">
-                            <Link href={user ? dashboardUrl : "/signup"}>
+                            <Link href={user ? dashboardUrl : "/ny-organisasjon"}>
                                 Kom i gang gratis <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>

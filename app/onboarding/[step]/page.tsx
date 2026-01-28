@@ -21,10 +21,10 @@ export default async function OnboardingWizardPage({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-    // Get org access with organization slug (needed for server actions)
+    // Get org access with organization info (needed for server actions and Step 6)
     const { data: access } = await supabase
         .from('user_org_access')
-        .select('organization_id, organizations(slug)')
+        .select('organization_id, organizations(id, slug, name, stripe_account_id, stripe_charges_enabled)')
         .eq('user_id', user.id)
         .single()
 
@@ -32,18 +32,16 @@ export default async function OnboardingWizardPage({
         return <div>Ingen organisasjon funnet for denne brukeren.</div>
     }
 
-    // Extract slug from the organizations relation (single object from foreign key)
-    const org = access.organizations as unknown as { slug: string }
+    // Extract org data from the organizations relation
+    const org = access.organizations as unknown as {
+        id: string
+        slug: string
+        name: string
+        stripe_account_id: string | null
+        stripe_charges_enabled: boolean
+    }
     const orgSlug = org.slug
     const progress = await getOnboardingProgress(orgSlug)
-
-    // Logic to prevent skipping steps
-    // If no progress record, they are at step 1.
-    // If trying to access step 4 but step 3 marked as not complete...
-    // For simplicity, we allow navigation if 'current_step' >= requested step?
-    // Or simply rely on the progress returned.
-
-    // Implementation note: We will render the component for the requested step.
 
     const renderStep = () => {
         switch (stepNumber) {
@@ -52,7 +50,16 @@ export default async function OnboardingWizardPage({
             case 3: return <Step3Categories orgSlug={orgSlug} data={progress?.onboarding_data} />
             case 4: return <Step4Import orgSlug={orgSlug} data={progress?.onboarding_data} />
             case 5: return <Step5Email orgSlug={orgSlug} data={progress?.onboarding_data} />
-            case 6: return <Step6Completion orgSlug={orgSlug} />
+            case 6: return (
+                <Step6Completion
+                    orgSlug={orgSlug}
+                    orgId={org.id}
+                    orgName={org.name}
+                    data={progress?.onboarding_data}
+                    hasStripeAccount={!!org.stripe_account_id}
+                    stripeChargesEnabled={org.stripe_charges_enabled || false}
+                />
+            )
             default: return <div>Ugyldig steg</div>
         }
     }
