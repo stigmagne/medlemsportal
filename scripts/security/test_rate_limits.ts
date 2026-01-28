@@ -4,7 +4,7 @@
  * H5: High Priority Security Task
  */
 
-import { checkRateLimit, RateLimitStrategy } from '../lib/rate-limit';
+import { checkRateLimit, RateLimitStrategy } from '../../lib/rate-limit';
 import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
