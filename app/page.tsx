@@ -25,13 +25,22 @@ export default async function Home() {
             dashboardUrl = '/superadmin/dashboard'
         } else {
             // Regular users: check if they have org access
-            const { data: orgAccess } = await supabase
+            const { data: orgAccess, error } = await supabase
                 .from('user_org_access')
                 .select('organization_id, organizations(slug)')
                 .eq('user_id', user.id)
                 .not('organization_id', 'is', null)
                 .limit(1)
                 .maybeSingle()
+
+            // Debug logging
+            console.log('🔍 Org Access Debug:', {
+                userId: user.id,
+                email: user.email,
+                orgAccess,
+                error,
+                hasOrganizations: !!orgAccess?.organizations
+            })
 
             if (orgAccess?.organizations) {
                 // User has org access → redirect to their primary organization
