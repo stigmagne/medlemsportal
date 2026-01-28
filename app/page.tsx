@@ -8,13 +8,39 @@ export default async function Home() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Determine destination if logged in
+    // Determine destination based on user role
     let dashboardUrl = '/login'
     if (user) {
-        // We reuse the logic to find where they should go, but instead of auto-redirecting,
-        // we just set the button link.
-        // Simplified Logic: Default to min-side
-        dashboardUrl = '/min-side'
+        // Check if user is superadmin (global, not tied to any org)
+        const { data: superadminAccess } = await supabase
+            .from('user_org_access')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'superadmin')
+            .is('organization_id', null)
+            .maybeSingle()
+
+        if (superadminAccess) {
+            // Superadmin users go directly to superadmin dashboard
+            dashboardUrl = '/superadmin'
+        } else {
+            // Regular users: check if they have org access
+            const { data: orgAccess } = await supabase
+                .from('user_org_access')
+                .select('organization_id, organizations(slug)')
+                .eq('user_id', user.id)
+                .not('organization_id', 'is', null)
+                .limit(1)
+                .maybeSingle()
+
+            if (orgAccess?.organizations) {
+                // User has org access → redirect to their primary organization
+                dashboardUrl = `/org/${orgAccess.organizations.slug}`
+            } else {
+                // No org access → fallback to personal dashboard
+                dashboardUrl = '/min-side'
+            }
+        }
     }
 
     return (
