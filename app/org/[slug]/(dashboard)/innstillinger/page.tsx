@@ -41,6 +41,23 @@ export default async function SettingsPage({
 
                 <Card>
                     <CardHeader>
+                        <CardTitle>Betalinger</CardTitle>
+                        <CardDescription>
+                            Konfigurer Stripe og betalingsinnstillinger.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <a
+                            href={`/org/${slug}/innstillinger/betaling`}
+                            className="inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 border border-gray-200 font-medium w-full"
+                        >
+                            Gå til betalingsinnstillinger
+                        </a>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
                         <CardTitle>Saksbehandling</CardTitle>
                         <CardDescription>
                             Konfigurer saksnummerering og moduler.

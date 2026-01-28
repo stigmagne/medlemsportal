@@ -127,3 +127,101 @@ export async function completeOnboarding(orgSlug: string) {
     revalidatePath('/dashboard')
     return { success: true }
 }
+
+// Create membership categories in the database
+export async function saveMembershipCategories(
+    orgSlug: string,
+    categories: { name: string; fee: number }[]
+) {
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+    const supabase = await createClient()
+
+    // First, check for existing categories to avoid duplicates
+    const { data: existingTypes } = await supabase
+        .from('member_types')
+        .select('name')
+        .eq('org_id', orgId)
+
+    const existingNames = new Set(existingTypes?.map(t => t.name.toLowerCase()) || [])
+
+    // Filter out categories that already exist
+    const newCategories = categories.filter(
+        cat => cat.name && !existingNames.has(cat.name.toLowerCase())
+    )
+
+    if (newCategories.length === 0) {
+        return { success: true, created: 0 }
+    }
+
+    // Insert new categories
+    const { error } = await supabase
+        .from('member_types')
+        .insert(
+            newCategories.map(cat => ({
+                org_id: orgId,
+                name: cat.name,
+                fee: cat.fee || 0,
+                description: `${cat.name} medlemskap`
+            }))
+        )
+
+    if (error) {
+        console.error('Error creating membership categories:', error)
+        return { error: error.message }
+    }
+
+    revalidatePath(`/org/${orgSlug}/innstillinger`)
+    return { success: true, created: newCategories.length }
+}
+
+// Create board members during onboarding
+export async function createBoardMembers(
+    orgSlug: string,
+    members: { firstName: string; lastName: string; email: string; role: string }[]
+) {
+    const { orgId } = await requireOrgAccess(orgSlug, 'org_admin')
+    const supabase = await createClient()
+
+    // Check for existing members with same email
+    const { data: existingMembers } = await supabase
+        .from('members')
+        .select('email')
+        .eq('organization_id', orgId)
+
+    const existingEmails = new Set(
+        existingMembers?.map(m => m.email?.toLowerCase()).filter(Boolean) || []
+    )
+
+    // Filter out members that already exist
+    const newMembers = members.filter(
+        m => m.email && !existingEmails.has(m.email.toLowerCase())
+    )
+
+    if (newMembers.length === 0) {
+        return { success: true, created: 0 }
+    }
+
+    // Insert new members
+    const { error } = await supabase
+        .from('members')
+        .insert(
+            newMembers.map(m => ({
+                organization_id: orgId,
+                first_name: m.firstName,
+                last_name: m.lastName,
+                email: m.email,
+                membership_status: 'active',
+                membership_category: 'styremedlem',
+                joined_date: new Date().toISOString().split('T')[0],
+                notes: `Styremedlem (${m.role}) - Lagt til under onboarding`
+            }))
+        )
+
+    if (error) {
+        console.error('Error creating board members:', error)
+        return { error: error.message }
+    }
+
+    revalidatePath(`/org/${orgSlug}/medlemmer`)
+    return { success: true, created: newMembers.length }
+}

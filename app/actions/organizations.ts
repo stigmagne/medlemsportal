@@ -89,7 +89,12 @@ export async function createOrganization(input: CreateOrganizationInput) {
         return { error: 'Kunne ikke gi deg tilgang til organisasjonen. Prøv igjen.' }
     }
 
-    // Initialize onboarding progress
+    // Get user's name for contact person
+    const userName = user.user_metadata?.full_name ||
+                     `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() ||
+                     user.email?.split('@')[0] || ''
+
+    // Initialize onboarding progress with registration data pre-filled
     const { error: onboardingError } = await supabase
         .from('onboarding_progress')
         .insert({
@@ -97,7 +102,13 @@ export async function createOrganization(input: CreateOrganizationInput) {
             current_step: 1,
             completed_steps: [],
             skipped_steps: [],
-            onboarding_data: {},
+            onboarding_data: {
+                // Pre-fill from registration
+                orgName: input.name.trim(),
+                orgNumber: input.orgNumber?.trim() || '',
+                contactName: userName,
+                contactEmail: input.contactEmail?.trim() || user.email,
+            },
         })
 
     if (onboardingError) {

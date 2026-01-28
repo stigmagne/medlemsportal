@@ -195,7 +195,7 @@ export default function NewOrganizationPage() {
                                     Din informasjon
                                 </h2>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                             Fornavn *
@@ -205,7 +205,7 @@ export default function NewOrganizationPage() {
                                             value={firstName}
                                             onChange={(e) => setFirstName(e.target.value)}
                                             required
-                                            className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white"
+                                            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white text-base"
                                             placeholder="Ola"
                                         />
                                     </div>
@@ -218,7 +218,7 @@ export default function NewOrganizationPage() {
                                             value={lastName}
                                             onChange={(e) => setLastName(e.target.value)}
                                             required
-                                            className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white"
+                                            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white text-base"
                                             placeholder="Nordmann"
                                         />
                                     </div>
@@ -236,7 +236,7 @@ export default function NewOrganizationPage() {
                                             if (!contactEmail) setContactEmail(e.target.value)
                                         }}
                                         required
-                                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white"
+                                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white text-base"
                                         placeholder="ola@example.no"
                                     />
                                 </div>
@@ -251,7 +251,7 @@ export default function NewOrganizationPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         minLength={12}
-                                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white"
+                                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white text-base"
                                         placeholder="Minimum 12 tegn"
                                     />
                                     <p className="mt-1 text-xs text-slate-500">
@@ -277,7 +277,7 @@ export default function NewOrganizationPage() {
                                     onChange={(e) => setOrgName(e.target.value)}
                                     required
                                     minLength={2}
-                                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white"
+                                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white text-base"
                                     placeholder="F.eks. Bakken Velforening"
                                 />
                             </div>
@@ -291,7 +291,7 @@ export default function NewOrganizationPage() {
                                     value={orgNumber}
                                     onChange={(e) => setOrgNumber(e.target.value)}
                                     pattern="[0-9]{9}"
-                                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white"
+                                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white text-base"
                                     placeholder="9 siffer fra Brønnøysundregistrene"
                                 />
                                 <p className="mt-1 text-xs text-slate-500">
@@ -307,7 +307,7 @@ export default function NewOrganizationPage() {
                                     type="email"
                                     value={contactEmail}
                                     onChange={(e) => setContactEmail(e.target.value)}
-                                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white"
+                                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-800 dark:text-white text-base"
                                     placeholder="styret@forening.no"
                                 />
                                 <p className="mt-1 text-xs text-slate-500">
