@@ -20,11 +20,11 @@ ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
 -- SECURITY (M8): Restrict viewing to authenticated users only
 -- Superadmins can do everything.
 
--- SECURITY (M8): Only authenticated users can view subscription plans
+-- SECURITY (M8): Restrict viewing to active plans only (not all plans)
 CREATE POLICY "Authenticated users can view active plans" ON subscription_plans
     FOR SELECT 
     TO authenticated
-    USING (true);
+    USING (is_active = true);
 
 CREATE POLICY "Superadmins can manage plans" ON subscription_plans
     FOR ALL USING (
