@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createBoardPosition, updateBoardPosition } from "@/app/org/[slug]/innstillinger/styre/actions"
+import { createBoardPosition, updateBoardPosition } from "@/app/org/[slug]/(dashboard)/innstillinger/styre/actions"
 import { createClient } from "@/lib/supabase/client"
 import { Loader2, Upload, FileText } from "lucide-react"
 
