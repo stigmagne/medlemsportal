@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function RsvpPage() {
+function RsvpContent() {
     const [status, setStatus] = useState<'pending' | 'success' | 'error'>('pending')
     const [errorMessage, setErrorMessage] = useState('')
     const searchParams = useSearchParams()
@@ -108,5 +108,17 @@ export default function RsvpPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function RsvpPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+                <div className="text-center">Laster...</div>
+            </div>
+        }>
+            <RsvpContent />
+        </Suspense>
     )
 }
