@@ -13,6 +13,8 @@ export interface PublicBoardMember {
     bio: string | null
     public_email: string | null
     public_phone: string | null
+    term_start_date: string
+    term_end_date: string | null
 }
 
 export function BoardMemberCard({ member }: { member: PublicBoardMember }) {
