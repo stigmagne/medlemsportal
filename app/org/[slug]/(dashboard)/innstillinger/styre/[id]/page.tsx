@@ -3,15 +3,16 @@ import { requireOrgAccess } from "@/lib/auth/helpers"
 import { BoardMemberForm } from "@/components/board/BoardMemberForm"
 import { notFound } from "next/navigation"
 
-export default async function EditBoardPositionPage({ params }: { params: { slug: string; id: string } }) {
-    const { orgId } = await requireOrgAccess(params.slug, 'org_admin')
+export default async function EditBoardPositionPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+    const { slug, id } = await params
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
     const supabase = await createClient()
 
     // Fetch position
     const { data: position } = await supabase
         .from('board_positions')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .eq('organization_id', orgId)
         .single()
 
@@ -34,7 +35,7 @@ export default async function EditBoardPositionPage({ params }: { params: { slug
                 </div>
             </div>
 
-            <BoardMemberForm orgSlug={params.slug} members={members || []} initialData={position} />
+            <BoardMemberForm orgSlug={slug} members={members || []} initialData={position} />
         </div>
     )
 }

@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 
-export default async function BoardSettingsPage({ params }: { params: { slug: string } }) {
-    const { orgId } = await requireOrgAccess(params.slug, 'org_admin')
+export default async function BoardSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
     const supabase = await createClient()
 
     const { data: positions } = await supabase
@@ -32,7 +33,7 @@ export default async function BoardSettingsPage({ params }: { params: { slug: st
                     <p className="text-muted-foreground">Administrer styrets sammensetning og roller.</p>
                 </div>
                 <Button asChild>
-                    <Link href={`/org/${params.slug}/innstillinger/styre/ny`}>
+                    <Link href={`/org/${slug}/innstillinger/styre/ny`}>
                         <Plus className="mr-2 h-4 w-4" />
                         Legg til verv
                     </Link>
@@ -68,7 +69,7 @@ export default async function BoardSettingsPage({ params }: { params: { slug: st
                         </div>
                         <div className="col-span-2 text-right">
                             <Button variant="ghost" size="sm" asChild>
-                                <Link href={`/org/${params.slug}/innstillinger/styre/${position.id}`}>Rediger</Link>
+                                <Link href={`/org/${slug}/innstillinger/styre/${position.id}`}>Rediger</Link>
                             </Button>
                         </div>
                     </div>

@@ -2,8 +2,9 @@ import { createClient } from "@/lib/supabase/server"
 import { requireOrgAccess } from "@/lib/auth/helpers"
 import { BoardMemberForm } from "@/components/board/BoardMemberForm"
 
-export default async function NewBoardPositionPage({ params }: { params: { slug: string } }) {
-    const { orgId } = await requireOrgAccess(params.slug, 'org_admin')
+export default async function NewBoardPositionPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params
+    const { orgId } = await requireOrgAccess(slug, 'org_admin')
     const supabase = await createClient()
 
     // Fetch active members for selection
@@ -23,7 +24,7 @@ export default async function NewBoardPositionPage({ params }: { params: { slug:
                 </div>
             </div>
 
-            <BoardMemberForm orgSlug={params.slug} members={members || []} />
+            <BoardMemberForm orgSlug={slug} members={members || []} />
         </div>
     )
 }
