@@ -46,7 +46,7 @@ export default async function SmsPage({ params }: { params: Promise<{ slug: stri
             </div>
 
             <SmsComposer
-                orgId={org.id}
+                orgSlug={slug}
                 groups={groups}
                 totalMembers={totalMembers || 0}
             />
