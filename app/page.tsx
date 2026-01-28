@@ -22,7 +22,7 @@ export default async function Home() {
 
         if (superadminAccess) {
             // Superadmin users go directly to superadmin dashboard
-            dashboardUrl = '/superadmin'
+            dashboardUrl = '/superadmin/dashboard'
         } else {
             // Regular users: check if they have org access
             const { data: orgAccess } = await supabase
