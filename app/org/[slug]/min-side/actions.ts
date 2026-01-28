@@ -28,6 +28,7 @@ export async function updateProfile(prevState: UpdateProfileState, formData: For
     const firstName = formData.get('first_name') as string
     const lastName = formData.get('last_name') as string
     const phone = formData.get('phone') as string
+    const dateOfBirth = formData.get('date_of_birth') as string
     const address = formData.get('address') as string
     const postalCode = formData.get('postal_code') as string
     const city = formData.get('city') as string
@@ -38,6 +39,10 @@ export async function updateProfile(prevState: UpdateProfileState, formData: For
 
     if (!firstName || !lastName) {
         return { error: 'Fornavn og etternavn er påkrevd.' }
+    }
+
+    if (!dateOfBirth) {
+        return { error: 'Fødselsdato er påkrevd (BufDir-krav).' }
     }
 
     try {
@@ -61,6 +66,7 @@ export async function updateProfile(prevState: UpdateProfileState, formData: For
                 first_name: firstName,
                 last_name: lastName,
                 phone: phone,
+                date_of_birth: dateOfBirth,
                 address: address,
                 postal_code: postalCode,
                 city: city,
