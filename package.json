@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:security:cross-org": "ts-node scripts/security/test_cross_org_access.ts",
-    "test:security:rate-limit": "ts-node scripts/security/test_rate_limits.ts"
+    "test:security:cross-org": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/security/test_cross_org_access.ts",
+    "test:security:rate-limit": "ts-node --compiler-options '{\"module\":\"commonjs\"}' scripts/security/test_rate_limits.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
