@@ -180,6 +180,11 @@ export default function DashboardShell({
                     href: `/org/${org.slug}/innstillinger/rapporter`,
                     label: 'Rapportering',
                     icon: <PieChart className="w-5 h-5" />
+                },
+                {
+                    href: `/org/${org.slug}/innstillinger/styre`,
+                    label: 'Styre',
+                    icon: <Users2 className="w-5 h-5" />
                 }
             ]
         }
