@@ -81,7 +81,16 @@ export async function submitExpenses(items: SubmitExpenseInput[]) {
         return { error: 'Kunne ikke sende inn reiseregning' }
     }
 
-    revalidatePath(`/org/${orgId}/minside/utlegg`)
+    // Get org slug for revalidatePath (URL uses slug, not id)
+    const { data: org } = await supabase
+        .from('organizations')
+        .select('slug')
+        .eq('id', orgId)
+        .single()
+
+    if (org?.slug) {
+        revalidatePath(`/org/${org.slug}/min-side/utlegg`)
+    }
     return { success: true }
 }
 

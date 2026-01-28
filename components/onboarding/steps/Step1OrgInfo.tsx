@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOnboardingProgress } from '@/app/actions/onboarding'
 
-export default function Step1OrgInfo({ orgId, data }: { orgId: string, data: any }) {
+export default function Step1OrgInfo({ orgSlug, data }: { orgSlug: string, data: any }) {
     const router = useRouter()
     const [orgName, setOrgName] = useState(data?.orgName || '')
     const [orgNumber, setOrgNumber] = useState(data?.orgNumber || '')
@@ -13,7 +13,7 @@ export default function Step1OrgInfo({ orgId, data }: { orgId: string, data: any
 
     const handleNext = async () => {
         setLoading(true)
-        await updateOnboardingProgress(orgId, 1, { orgName, orgNumber, contactName })
+        await updateOnboardingProgress(orgSlug, 1, { orgName, orgNumber, contactName })
         router.push('/onboarding/2')
     }
 

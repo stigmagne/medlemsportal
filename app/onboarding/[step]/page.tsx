@@ -21,25 +21,21 @@ export default async function OnboardingWizardPage({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
-    // Find user's organization (assuming 1 org for now for onboarding context)
-    // In a real app, user might have multiple or be creating one.
-    // Assuming they are logged in and have an org context or just created one.
-    // Let's grab the org they are admin of.
-
+    // Get org access with organization slug (needed for server actions)
     const { data: access } = await supabase
         .from('user_org_access')
-        .select('organization_id')
+        .select('organization_id, organizations(slug)')
         .eq('user_id', user.id)
         .single()
 
-    if (!access) {
-        // If no org, create one? Or redirect to create org page?
-        // For this scope, assume org exists.
+    if (!access || !access.organizations) {
         return <div>Ingen organisasjon funnet for denne brukeren.</div>
     }
 
-    const orgId = access.organization_id
-    const progress = await getOnboardingProgress(orgId)
+    // Extract slug from the organizations relation (single object from foreign key)
+    const org = access.organizations as unknown as { slug: string }
+    const orgSlug = org.slug
+    const progress = await getOnboardingProgress(orgSlug)
 
     // Logic to prevent skipping steps
     // If no progress record, they are at step 1.
@@ -51,12 +47,12 @@ export default async function OnboardingWizardPage({
 
     const renderStep = () => {
         switch (stepNumber) {
-            case 1: return <Step1OrgInfo orgId={orgId} data={progress?.onboarding_data} />
-            case 2: return <Step2Styling orgId={orgId} data={progress?.onboarding_data} />
-            case 3: return <Step3Categories orgId={orgId} data={progress?.onboarding_data} />
-            case 4: return <Step4Import orgId={orgId} data={progress?.onboarding_data} />
-            case 5: return <Step5Email orgId={orgId} data={progress?.onboarding_data} />
-            case 6: return <Step6Completion orgId={orgId} />
+            case 1: return <Step1OrgInfo orgSlug={orgSlug} data={progress?.onboarding_data} />
+            case 2: return <Step2Styling orgSlug={orgSlug} data={progress?.onboarding_data} />
+            case 3: return <Step3Categories orgSlug={orgSlug} data={progress?.onboarding_data} />
+            case 4: return <Step4Import orgSlug={orgSlug} data={progress?.onboarding_data} />
+            case 5: return <Step5Email orgSlug={orgSlug} data={progress?.onboarding_data} />
+            case 6: return <Step6Completion orgSlug={orgSlug} />
             default: return <div>Ugyldig steg</div>
         }
     }

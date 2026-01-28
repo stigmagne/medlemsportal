@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOnboardingProgress } from '@/app/actions/onboarding'
 
-export default function Step2Styling({ orgId, data }: { orgId: string, data: any }) {
+export default function Step2Styling({ orgSlug, data }: { orgSlug: string, data: any }) {
     const router = useRouter()
     const [colorTheme, setColorTheme] = useState(data?.colorTheme || 'blue')
     const [loading, setLoading] = useState(false)
@@ -17,7 +17,7 @@ export default function Step2Styling({ orgId, data }: { orgId: string, data: any
 
     const handleNext = async () => {
         setLoading(true)
-        await updateOnboardingProgress(orgId, 2, { colorTheme })
+        await updateOnboardingProgress(orgSlug, 2, { colorTheme })
         router.push('/onboarding/3')
     }
 

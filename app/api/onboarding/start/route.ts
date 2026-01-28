@@ -31,13 +31,15 @@ export async function POST(request: NextRequest) {
 
         const { data: org } = await supabase
             .from('organizations')
-            .select('stripe_account_id, name, org_number')
+            .select('stripe_account_id, name, org_number, slug')
             .eq('id', organizationId)
             .single()
 
         if (!org) {
             return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
         }
+
+        const orgSlug = org.slug
 
         let accountId = org.stripe_account_id
 
@@ -76,8 +78,8 @@ export async function POST(request: NextRequest) {
 
         const accountLink = await stripe.accountLinks.create({
             account: accountId,
-            refresh_url: `${trustedOrigin}/org/${organizationId}/innstillinger/betaling?refresh=true`, // Redirect back to settings page on refresh
-            return_url: `${trustedOrigin}/org/${organizationId}/innstillinger/betaling?success=true`, // Redirect back on success
+            refresh_url: `${trustedOrigin}/org/${orgSlug}/innstillinger/betaling?refresh=true`, // Redirect back to settings page on refresh
+            return_url: `${trustedOrigin}/org/${orgSlug}/innstillinger/betaling?success=true`, // Redirect back on success
             type: 'account_onboarding',
         })
 

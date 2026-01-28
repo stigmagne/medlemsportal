@@ -4,18 +4,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { completeOnboarding } from '@/app/actions/onboarding'
 
-export default function Step6Completion({ orgId }: { orgId: string }) {
+export default function Step6Completion({ orgSlug }: { orgSlug: string }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
 
     const handleComplete = async () => {
         setLoading(true)
-        await completeOnboarding(orgId)
-        // Assuming org slug is needed for dashboard, but we might not have it here unless passed.
-        // For now redirect to generic dashboard placeholder or assume the backend handles lookup.
-        // Actually, normally we redirect to /org/[slug]/dashboard.
-        // We can fetch slug or just redirect to '/' and let middleware/page logic handle it.
-        router.push('/')
+        await completeOnboarding(orgSlug)
+        // Redirect to the org dashboard after completing onboarding
+        router.push(`/org/${orgSlug}/dashboard`)
     }
 
     return (

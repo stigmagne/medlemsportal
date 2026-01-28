@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOnboardingProgress } from '@/app/actions/onboarding'
 
-export default function Step3Categories({ orgId, data }: { orgId: string, data: any }) {
+export default function Step3Categories({ orgSlug, data }: { orgSlug: string, data: any }) {
     const router = useRouter()
     // Default categories
     const [categories, setCategories] = useState(data?.categories || [
@@ -17,7 +17,7 @@ export default function Step3Categories({ orgId, data }: { orgId: string, data: 
         setLoading(true)
         // Here we would ideally save categories to 'membership_fees' or similar DB table
         // For now we just save to progress JSON
-        await updateOnboardingProgress(orgId, 3, { categories })
+        await updateOnboardingProgress(orgSlug, 3, { categories })
         router.push('/onboarding/4')
     }
 

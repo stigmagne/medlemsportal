@@ -167,7 +167,7 @@ export default function SubmitExpenseForm({ slug, orgId, events }: { slug: strin
             setError(res.error)
             setLoading(false)
         } else {
-            router.push(`/org/${slug}/minside/utlegg`)
+            router.push(`/org/${slug}/min-side/utlegg`)
         }
     }
 

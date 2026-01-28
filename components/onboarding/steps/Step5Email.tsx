@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateOnboardingProgress } from '@/app/actions/onboarding'
 
-export default function Step5Email({ orgId, data }: { orgId: string, data: any }) {
+export default function Step5Email({ orgSlug, data }: { orgSlug: string, data: any }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const defaultSubject = 'Velkommen til medlemsportalen!'
@@ -15,7 +15,7 @@ export default function Step5Email({ orgId, data }: { orgId: string, data: any }
 
     const handleNext = async () => {
         setLoading(true)
-        await updateOnboardingProgress(orgId, 5, { emailSubject: subject, emailBody: body })
+        await updateOnboardingProgress(orgSlug, 5, { emailSubject: subject, emailBody: body })
         router.push('/onboarding/6')
     }
 
