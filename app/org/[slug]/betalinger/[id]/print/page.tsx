@@ -104,9 +104,41 @@ export default async function InvoicePrintPage({
             <div className="border-t-2 border-gray-900 pt-4 mb-12">
                 <div className="flex justify-between">
                     <div>
-                        <p className="font-bold">Betalingsinformasjon:</p>
-                        <p>Betalt via: {payment.provider || 'Stripe/Kort'}</p>
-                        <p>Status: {payment.status === 'captured' ? 'BETALT' : payment.status.toUpperCase()}</p>
+                        <p className="font-bold mb-2">Betalingsinformasjon:</p>
+                        {payment.status === 'pending' && (payment.kid || org.account_number) ? (
+                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                {payment.due_date && (
+                                    <p className="mb-2">
+                                        <span className="font-medium">Forfallsdato:</span>{' '}
+                                        {format(new Date(payment.due_date), 'dd.MM.yyyy')}
+                                    </p>
+                                )}
+                                {org.account_number && (
+                                    <p className="mb-1">
+                                        <span className="font-medium">Kontonummer:</span>{' '}
+                                        <span className="font-mono text-lg">{org.account_number}</span>
+                                    </p>
+                                )}
+                                {payment.kid && (
+                                    <p className="mb-1">
+                                        <span className="font-medium">KID:</span>{' '}
+                                        <span className="font-mono text-lg font-bold">{payment.kid}</span>
+                                    </p>
+                                )}
+                                <p className="mb-1">
+                                    <span className="font-medium">Beløp:</span>{' '}
+                                    <span className="font-mono text-lg">{Number(payment.amount).toFixed(2)} kr</span>
+                                </p>
+                                <p className="text-sm text-gray-600 mt-3 italic">
+                                    Bruk KID-nummeret ved betaling for automatisk registrering.
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <p>Betalt via: {payment.payment_method === 'invoice' ? 'Faktura/Bank' : payment.provider || 'Stripe/Kort'}</p>
+                                <p>Status: {payment.status === 'paid' || payment.status === 'captured' ? 'BETALT' : payment.status.toUpperCase()}</p>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

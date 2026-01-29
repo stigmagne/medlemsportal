@@ -88,32 +88,32 @@ export default function VotingClient({
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <h3 className="font-semibold text-gray-900 mb-6">Avgi din stemme</h3>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-2 sm:gap-4">
                             <button
                                 onClick={() => handleVote('support')}
                                 disabled={isPending}
-                                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-green-100 bg-green-50 hover:bg-green-100 hover:border-green-300 transition-all text-green-800"
+                                className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4 rounded-lg border-2 border-green-100 bg-green-50 hover:bg-green-100 hover:border-green-300 transition-all text-green-800"
                             >
-                                <span className="text-2xl">👍</span>
-                                <span className="font-bold text-sm">FOR</span>
+                                <span className="text-xl sm:text-2xl">👍</span>
+                                <span className="font-bold text-xs sm:text-sm">FOR</span>
                             </button>
 
                             <button
                                 onClick={() => handleVote('oppose')}
                                 disabled={isPending}
-                                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-red-100 bg-red-50 hover:bg-red-100 hover:border-red-300 transition-all text-red-800"
+                                className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4 rounded-lg border-2 border-red-100 bg-red-50 hover:bg-red-100 hover:border-red-300 transition-all text-red-800"
                             >
-                                <span className="text-2xl">👎</span>
-                                <span className="font-bold text-sm">MOT</span>
+                                <span className="text-xl sm:text-2xl">👎</span>
+                                <span className="font-bold text-xs sm:text-sm">MOT</span>
                             </button>
 
                             <button
                                 onClick={() => handleVote('abstain')}
                                 disabled={isPending}
-                                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-all text-gray-600"
+                                className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4 rounded-lg border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-all text-gray-600"
                             >
-                                <span className="text-2xl">😐</span>
-                                <span className="font-bold text-sm">AVSTÅR</span>
+                                <span className="text-xl sm:text-2xl">😐</span>
+                                <span className="font-bold text-xs sm:text-sm">AVSTÅR</span>
                             </button>
                         </div>
                         <p className="text-xs text-gray-500 mt-4 text-center">

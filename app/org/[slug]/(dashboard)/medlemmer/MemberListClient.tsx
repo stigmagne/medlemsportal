@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Papa from 'papaparse'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, ChevronLeft, ChevronRight, Search, Users } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Search, Users, Columns, AlertTriangle, X } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 
 // Debounce hook
@@ -26,6 +26,10 @@ type Member = {
     last_name: string
     email: string | null
     phone: string | null
+    address: string | null
+    postal_code: string | null
+    city: string | null
+    birth_date: string | null
     membership_category: string | null
     membership_status: 'active' | 'inactive' | 'pending'
 }
@@ -38,6 +42,7 @@ type MemberListClientProps = {
     currentPage: number
     totalPages: number
     perPage: number
+    currentSort?: string
 }
 
 export default function MemberListClient({
@@ -47,7 +52,8 @@ export default function MemberListClient({
     totalCount,
     currentPage,
     totalPages,
-    perPage
+    perPage,
+    currentSort = 'name'
 }: MemberListClientProps) {
     const t = useTranslations('Members.list')
     const router = useRouter()
@@ -57,6 +63,8 @@ export default function MemberListClient({
     // State
     const [isExporting, setIsExporting] = useState(false)
     const [localSearch, setLocalSearch] = useState(searchParams.get('q') || '')
+    const [isExpanded, setIsExpanded] = useState(false)
+    const [showMobileWarning, setShowMobileWarning] = useState(false)
     const debouncedSearch = useDebounce(localSearch, 500)
 
     // Sync URL with search and filter
@@ -87,6 +95,20 @@ export default function MemberListClient({
 
     const handleStatusFilterChange = (status: string) => {
         router.push(pathname + '?' + createQueryString('status', status === 'all' ? '' : status))
+    }
+
+    const handleSortChange = (sort: string) => {
+        router.push(pathname + '?' + createQueryString('sort', sort === 'name' ? '' : sort))
+    }
+
+    const handleExpandToggle = () => {
+        if (!isExpanded) {
+            // Check if on mobile (screen width < 768px)
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                setShowMobileWarning(true)
+            }
+        }
+        setIsExpanded(!isExpanded)
     }
 
     const handlePageChange = (page: number) => {
@@ -165,6 +187,18 @@ export default function MemberListClient({
                 </h1>
                 <div className="flex flex-col sm:flex-row gap-2">
                     <button
+                        onClick={handleExpandToggle}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 border rounded-lg font-medium transition-colors ${
+                            isExpanded
+                                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                        title={isExpanded ? 'Skjul utvidet visning' : 'Vis utvidet visning'}
+                    >
+                        <Columns className="w-5 h-5" />
+                        <span className="hidden sm:inline">{isExpanded ? 'Kompakt' : 'Utvidet'}</span>
+                    </button>
+                    <button
                         onClick={handleExport}
                         disabled={isExporting}
                         className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50"
@@ -198,6 +232,27 @@ export default function MemberListClient({
                 </div>
             </div>
 
+            {/* Mobile warning for expanded view */}
+            {showMobileWarning && isExpanded && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6 flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                            Utvidet visning på mobil
+                        </p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                            Denne visningen fungerer best på en PC-skjerm, eller om du legger mobilen på siden (liggende modus).
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setShowMobileWarning(false)}
+                        className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
+
             {/* Search and Filter */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-col md:flex-row gap-4">
@@ -228,6 +283,17 @@ export default function MemberListClient({
                             </button>
                         ))}
                     </div>
+
+                    {/* Sort dropdown */}
+                    <select
+                        value={currentSort}
+                        onChange={(e) => handleSortChange(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="name">Navn (A-Å)</option>
+                        <option value="newest">Nyeste først</option>
+                        <option value="oldest">Eldste først</option>
+                    </select>
                 </div>
             </div>
 
@@ -244,6 +310,19 @@ export default function MemberListClient({
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('headers.email')}
                                     </th>
+                                    {isExpanded && (
+                                        <>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Telefon
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Adresse
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Fødselsdato
+                                            </th>
+                                        </>
+                                    )}
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {t('headers.status')}
                                     </th>
@@ -262,6 +341,30 @@ export default function MemberListClient({
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                                             {member.email || '-'}
                                         </td>
+                                        {isExpanded && (
+                                            <>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                                    {member.phone || '-'}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                                    {member.address ? (
+                                                        <span>
+                                                            {member.address}
+                                                            {(member.postal_code || member.city) && (
+                                                                <span className="block text-xs text-gray-500">
+                                                                    {[member.postal_code, member.city].filter(Boolean).join(' ')}
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    ) : '-'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                                    {member.birth_date
+                                                        ? new Date(member.birth_date).toLocaleDateString('nb-NO')
+                                                        : '-'}
+                                                </td>
+                                            </>
+                                        )}
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 text-xs font-medium rounded ${member.membership_status === 'active'
                                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'

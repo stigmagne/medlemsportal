@@ -72,7 +72,7 @@ export default async function ContingentPage({
             </div>
 
             {/* Content Area */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-8 text-center">
                 {activeFees.length === 0 ? (
                     <div className="py-8">
                         <div className="bg-yellow-50 dark:bg-yellow-900/20 inline-block p-4 rounded-full mb-4">

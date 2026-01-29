@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { getExpensesForAdmin } from '@/app/actions/expenses'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,15 +14,11 @@ export default async function AdminExpensesPage({
 }) {
     const { slug } = await params
     const { status } = await searchParams
-    const supabase = await createClient()
-
-    const { data: org } = await supabase.from('organizations').select('id').eq('slug', slug).single()
-    if (!org) return <div>Fant ikke organisasjon</div>
 
     const currentStatus = (status as any) || 'all'
-    const expenses = await getExpensesForAdmin(org.id, currentStatus)
+    const expenses = await getExpensesForAdmin(slug, currentStatus)
 
-    const pendingCount = await getExpensesForAdmin(org.id, 'submitted').then(res => res.length)
+    const pendingCount = await getExpensesForAdmin(slug, 'submitted').then(res => res.length)
     const totalAmountPending = expenses
         .filter(e => e.status === 'submitted')
         .reduce((sum, e) => sum + Number(e.total_amount), 0)

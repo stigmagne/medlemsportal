@@ -53,19 +53,25 @@ export default async function MembersPage({
     const to = from + perPage - 1
     const q = (resolvedSearchParams.q as string) || ''
     const status = (resolvedSearchParams.status as string) || ''
+    const sort = (resolvedSearchParams.sort as string) || 'name'
 
     // Fetch members with filters and pagination
     let query = supabase
         .from('members')
         .select(`
-            id, 
-            member_number, 
-            first_name, 
-            last_name, 
-            email, 
-            phone, 
+            id,
+            member_number,
+            first_name,
+            last_name,
+            email,
+            phone,
+            address,
+            postal_code,
+            city,
+            birth_date,
             membership_category,
             membership_status,
+            created_at,
             member_types (
                 name
             )
@@ -83,10 +89,17 @@ export default async function MembersPage({
         query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,member_number.ilike.%${q}%`)
     }
 
-    const { data: membersData, count, error } = await query
-        .order('last_name', { ascending: true })
-        .order('first_name', { ascending: true })
-        .range(from, to)
+    // Apply sorting
+    if (sort === 'newest') {
+        query = query.order('created_at', { ascending: false })
+    } else if (sort === 'oldest') {
+        query = query.order('created_at', { ascending: true })
+    } else {
+        // Default: sort by name
+        query = query.order('last_name', { ascending: true }).order('first_name', { ascending: true })
+    }
+
+    const { data: membersData, count, error } = await query.range(from, to)
 
     if (error) {
         console.error('Error fetching members:', {
@@ -122,6 +135,7 @@ export default async function MembersPage({
             currentPage={page}
             totalPages={totalPages}
             perPage={perPage}
+            currentSort={sort}
         />
     )
 }

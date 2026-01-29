@@ -8,7 +8,7 @@ import {
     LayoutDashboard, Users, Home, Calendar,
     CreditCard, Receipt, Users2, FileText, Settings, User,
     Wallet, ChevronDown, ChevronRight, Folder, PieChart, MessageSquare,
-    CalendarCheck, Gavel, ClipboardList, BookCheck
+    CalendarCheck, Gavel, ClipboardList, BookCheck, HelpCircle
 } from 'lucide-react'
 import { Breadcrumbs } from '@/components/breadcrumbs'
 
@@ -187,6 +187,11 @@ export default function DashboardShell({
                     icon: <Users2 className="w-5 h-5" />
                 }
             ]
+        },
+        {
+            href: `/org/${org.slug}/hjelp`,
+            label: 'Hjelp',
+            icon: <HelpCircle className="w-5 h-5" />
         }
     ]
 
@@ -376,7 +381,7 @@ export default function DashboardShell({
             )}
 
             {/* Main Content */}
-            <main className="flex-1 p-8 md:p-8 pt-6 overflow-x-hidden">
+            <main className="flex-1 p-4 md:p-8 pt-6 overflow-x-hidden">
                 <Breadcrumbs className="mb-6" />
                 {children}
             </main>

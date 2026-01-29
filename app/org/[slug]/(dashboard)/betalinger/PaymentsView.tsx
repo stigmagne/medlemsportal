@@ -26,6 +26,9 @@ interface Payment {
     service_fee: number
     payout_to_org: number
     event_id?: string
+    status?: string
+    kid?: string
+    due_date?: string
     member?: {
         first_name: string
         last_name: string
@@ -64,27 +67,27 @@ export default function PaymentsView({
                         Alle betalinger for inneværende år
                     </p>
                 </div>
-                <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+                <div className="flex gap-1 sm:gap-2 bg-gray-100 p-1 rounded-lg overflow-x-auto">
                     <button
                         onClick={() => setFilter('all')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${filter === 'all' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap ${filter === 'all' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Alle
                     </button>
                     <button
                         onClick={() => setFilter('membership')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${filter === 'membership' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap ${filter === 'membership' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Kontingent
                     </button>
                     <button
                         onClick={() => setFilter('event')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${filter === 'event' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap ${filter === 'event' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
-                        Arrangementer
+                        Arrangement
                     </button>
                 </div>
             </div>
@@ -150,6 +153,7 @@ export default function PaymentsView({
                                 <TableHead>Gebyr</TableHead>
                                 <TableHead className="text-right">Til dere</TableHead>
                                 <TableHead>Dato</TableHead>
+                                <TableHead>KID</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -209,6 +213,15 @@ export default function PaymentsView({
                                         <TableCell className="text-sm text-muted-foreground">
                                             {new Date(payment.created_at).toLocaleDateString('nb-NO')}
                                         </TableCell>
+                                        <TableCell>
+                                            {payment.kid ? (
+                                                <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono">
+                                                    {payment.kid}
+                                                </code>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 )
                             })}
@@ -221,7 +234,7 @@ export default function PaymentsView({
                                 <TableCell className="text-right font-bold text-lg">
                                     {totalPayout.toFixed(2)} kr
                                 </TableCell>
-                                <TableCell />
+                                <TableCell colSpan={2} />
                             </TableRow>
                         </TableFooter>
                     </Table>

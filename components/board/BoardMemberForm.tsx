@@ -83,7 +83,7 @@ export function BoardMemberForm({
     }
 
     return (
-        <form action={onSubmit} className="space-y-6 max-w-2xl border p-6 rounded-lg bg-card">
+        <form action={onSubmit} className="space-y-6 max-w-2xl border p-4 sm:p-6 rounded-lg bg-card">
             {error && (
                 <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">
                     {error}
@@ -107,7 +107,7 @@ export function BoardMemberForm({
                 {initialData && <input type="hidden" name="member_id" value={initialData.member_id} />}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="position_type">Rolle</Label>
                     <Select name="position_type" defaultValue={initialData?.position_type || 'medlem'}>
@@ -132,7 +132,7 @@ export function BoardMemberForm({
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="elected_date">Valgt dato</Label>
                     <Input type="date" id="elected_date" name="elected_date" required defaultValue={initialData?.elected_date} />
@@ -144,7 +144,7 @@ export function BoardMemberForm({
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="term_start_date">Startdato</Label>
                     <Input type="date" id="term_start_date" name="term_start_date" required defaultValue={initialData?.term_start_date} />
@@ -208,7 +208,7 @@ export function BoardMemberForm({
 
             <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-sm font-medium">Offentlig kontaktinfo (valgfritt)</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                         <Label htmlFor="public_email">Styre-epost</Label>
                         <Input type="email" id="public_email" name="public_email" placeholder="leder@forening.no" defaultValue={initialData?.public_email} />

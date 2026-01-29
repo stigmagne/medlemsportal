@@ -85,7 +85,7 @@ export default function ReportingDashboardClient({ stats, growth }: ReportingDas
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
+                <Card className="md:col-span-1 lg:col-span-4">
                     <CardHeader>
                         <CardTitle>Aldersfordeling</CardTitle>
                         <CardDescription>
@@ -106,7 +106,7 @@ export default function ReportingDashboardClient({ stats, growth }: ReportingDas
                     </CardContent>
                 </Card>
 
-                <Card className="col-span-3">
+                <Card className="md:col-span-1 lg:col-span-3">
                     <CardHeader>
                         <CardTitle>Kakediagram</CardTitle>
                         <CardDescription>
@@ -137,7 +137,7 @@ export default function ReportingDashboardClient({ stats, growth }: ReportingDas
                 </Card>
             </div>
 
-            <Card className="col-span-4">
+            <Card>
                 <CardHeader>
                     <CardTitle>Medlemsvekst (Siste 12 mnd)</CardTitle>
                     <CardDescription>

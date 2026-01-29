@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import MemberSidebarShell from '../min-side/MemberSidebarShell'
+import DashboardShell from '../(dashboard)/DashboardShell'
 
 export default async function ArkivLayout({
     children,
@@ -53,6 +54,7 @@ export default async function ArkivLayout({
     }
 
     const userRole = access?.role || 'org_member'
+    const isAdmin = userRole === 'org_admin' || userRole === 'superadmin'
 
     // Get user display name
     const { data: profile } = await supabase
@@ -69,6 +71,26 @@ export default async function ArkivLayout({
         const supabase = await createClient()
         await supabase.auth.signOut()
         redirect('/')
+    }
+
+    // Use admin sidebar for admins, member sidebar for regular members
+    if (isAdmin) {
+        return (
+            <DashboardShell
+                org={{
+                    name: organization.name,
+                    role: userRole,
+                    slug: slug
+                }}
+                user={{
+                    displayName: displayName,
+                    email: user.email || ''
+                }}
+                handleSignOut={handleSignOut}
+            >
+                {children}
+            </DashboardShell>
+        )
     }
 
     return (
