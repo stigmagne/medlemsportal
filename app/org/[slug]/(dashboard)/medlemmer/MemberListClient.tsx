@@ -38,6 +38,7 @@ type MemberListClientProps = {
     currentPage: number
     totalPages: number
     perPage: number
+    currentSort?: string
 }
 
 export default function MemberListClient({
@@ -47,7 +48,8 @@ export default function MemberListClient({
     totalCount,
     currentPage,
     totalPages,
-    perPage
+    perPage,
+    currentSort = 'name'
 }: MemberListClientProps) {
     const t = useTranslations('Members.list')
     const router = useRouter()
@@ -87,6 +89,10 @@ export default function MemberListClient({
 
     const handleStatusFilterChange = (status: string) => {
         router.push(pathname + '?' + createQueryString('status', status === 'all' ? '' : status))
+    }
+
+    const handleSortChange = (sort: string) => {
+        router.push(pathname + '?' + createQueryString('sort', sort === 'name' ? '' : sort))
     }
 
     const handlePageChange = (page: number) => {
@@ -228,6 +234,17 @@ export default function MemberListClient({
                             </button>
                         ))}
                     </div>
+
+                    {/* Sort dropdown */}
+                    <select
+                        value={currentSort}
+                        onChange={(e) => handleSortChange(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="name">Navn (A-Å)</option>
+                        <option value="newest">Nyeste først</option>
+                        <option value="oldest">Eldste først</option>
+                    </select>
                 </div>
             </div>
 

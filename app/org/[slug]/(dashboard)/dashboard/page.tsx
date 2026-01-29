@@ -156,7 +156,10 @@ export default async function OrganizationDashboard({
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <Link
+                    href={`/org/${slug}/medlemmer`}
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -172,9 +175,12 @@ export default async function OrganizationDashboard({
                             </svg>
                         </div>
                     </div>
-                </div>
+                </Link>
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <Link
+                    href={`/org/${slug}/betalinger`}
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -190,9 +196,12 @@ export default async function OrganizationDashboard({
                             </svg>
                         </div>
                     </div>
-                </div>
+                </Link>
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <Link
+                    href={`/org/${slug}/kommunikasjon`}
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -208,9 +217,12 @@ export default async function OrganizationDashboard({
                             </svg>
                         </div>
                     </div>
-                </div>
+                </Link>
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <Link
+                    href={`/org/${slug}/medlemmer?sort=newest`}
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -226,7 +238,7 @@ export default async function OrganizationDashboard({
                             </svg>
                         </div>
                     </div>
-                </div>
+                </Link>
             </div>
 
             {/* Analytics Section */}
