@@ -72,6 +72,23 @@ export default async function SettingsPage({
                         </a>
                     </CardContent>
                 </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Hjelp & Dokumentasjon</CardTitle>
+                        <CardDescription>
+                            Brukerveiledning og FAQ for administratorer.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <a
+                            href={`/org/${slug}/hjelp`}
+                            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium w-full"
+                        >
+                            Åpne admin-guiden
+                        </a>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )
