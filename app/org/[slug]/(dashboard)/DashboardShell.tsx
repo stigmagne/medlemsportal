@@ -376,7 +376,7 @@ export default function DashboardShell({
             )}
 
             {/* Main Content */}
-            <main className="flex-1 p-8 md:p-8 pt-6 overflow-x-hidden">
+            <main className="flex-1 p-4 md:p-8 pt-6 overflow-x-hidden">
                 <Breadcrumbs className="mb-6" />
                 {children}
             </main>

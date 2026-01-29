@@ -152,7 +152,7 @@ export default function PaymentSettingsClient({
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {/* Status indicators */}
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-3 md:grid-cols-3">
                         <div className={`flex items-center gap-2 p-3 rounded-lg ${
                             hasStripeAccount
                                 ? 'bg-green-50 dark:bg-green-900/20'

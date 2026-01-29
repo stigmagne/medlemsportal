@@ -67,27 +67,27 @@ export default function PaymentsView({
                         Alle betalinger for inneværende år
                     </p>
                 </div>
-                <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+                <div className="flex gap-1 sm:gap-2 bg-gray-100 p-1 rounded-lg overflow-x-auto">
                     <button
                         onClick={() => setFilter('all')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${filter === 'all' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap ${filter === 'all' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Alle
                     </button>
                     <button
                         onClick={() => setFilter('membership')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${filter === 'membership' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap ${filter === 'membership' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Kontingent
                     </button>
                     <button
                         onClick={() => setFilter('event')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${filter === 'event' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap ${filter === 'event' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
-                        Arrangementer
+                        Arrangement
                     </button>
                 </div>
             </div>
