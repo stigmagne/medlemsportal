@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireOrgAccess } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
 import { validateEmail, validatePhone, sanitizeError } from '@/lib/validation'
+import { generateKid, generateNumericReference } from '@/lib/invoicing/kid'
 
 export type CreateMemberInput = {
     organization_id: string
@@ -117,6 +118,10 @@ export async function createMember(data: CreateMemberInput) {
                 const dueDate = new Date()
                 dueDate.setDate(dueDate.getDate() + 14) // 14 days due date
 
+                // Generate KID number for invoice payment
+                const reference = generateNumericReference()
+                const kid = generateKid(reference)
+
                 const { error: invoiceError } = await supabase
                     .from('payment_transactions')
                     .insert({
@@ -127,6 +132,8 @@ export async function createMember(data: CreateMemberInput) {
                         description: `Medlemskontingent ${year} - ${memberType.name}`,
                         status: 'pending',
                         due_date: dueDate.toISOString(),
+                        kid: kid,
+                        payment_method: 'invoice',
                     })
 
                 if (invoiceError) {

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireOrgAccess, requireRole } from '@/lib/auth/helpers'
 import { revalidatePath } from 'next/cache'
+import { generateKid, generateNumericReference } from '@/lib/invoicing/kid'
 
 export async function updateOrganizationSettings(orgSlug: string, data: { membershipFee?: number, accountNumber?: string, contactEmail?: string }) {
     // SECURITY: Require admin access
@@ -187,6 +188,10 @@ export async function runNewYearRenewal(orgSlug: string, year: number) {
 
             const amount = typeFee !== undefined ? typeFee : fee
 
+            // Generate unique KID number for each invoice
+            const reference = generateNumericReference()
+            const kid = generateKid(reference)
+
             return {
                 org_id: orgId,
                 member_id: member.id,
@@ -195,6 +200,8 @@ export async function runNewYearRenewal(orgSlug: string, year: number) {
                 description: `Medlemskontingent ${year}${typeName ? ` - ${typeName}` : ''}`,
                 status: 'pending',
                 due_date: dueDate.toISOString(),
+                kid: kid,
+                payment_method: 'invoice',
                 created_at: new Date().toISOString()
             }
         })
